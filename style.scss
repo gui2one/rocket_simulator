@@ -1,0 +1,29 @@
+html,
+body {
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+}
+
+#controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  font-family: monospace;
+  padding: 1em;
+  background-color: rgba(#333, 0.2);
+  color: white;
+
+  input[type="range"] {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+.range-label {
+  padding: 0;
+  margin: 0;
+  // line-height: 0;
+  vertical-align: top;
+}
