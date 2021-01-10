@@ -23,13 +23,49 @@ setInterval(() => {
   // console.log(rocket_sim.currentMission.gravityAcceleration);
 }, 500);
 let thrust_slider;
+const controls_div = document.getElementById("controls");
 const rocket_controls = () => {
   const div = document.createElement("div");
-  div.id = "controls";
-  document.body.append(div);
+  div.id = "ship-controls";
+  controls_div.appendChild(div);
   thrust_slider = new RangeSlider(div, "thrust", (value) => {
     ship.engines[0].throttle = value / 100.0;
   });
+};
+
+const init_time_controls = () => {
+  const div = document.createElement("div");
+  div.id = "time-controls";
+  controls_div.appendChild(div);
+
+  let btn_minus = document.createElement("button");
+  let btn_plus = document.createElement("button");
+  btn_minus.innerHTML = "/2";
+  btn_plus.innerHTML = "x2";
+  div.appendChild(btn_minus);
+  div.appendChild(btn_plus);
+
+  let span = document.createElement("span");
+  span.id = "time_scale_span";
+  span.innerHTML = rocket_sim.clock.time_scale.toString();
+  div.appendChild(span);
+
+  btn_plus.addEventListener("click", () => {
+    console.log("rocket_sim");
+    rocket_sim.clock.time_scale *= 2.0;
+  });
+  btn_minus.addEventListener("click", () => {
+    if (rocket_sim.clock.time_scale >= 2.0) {
+      rocket_sim.clock.time_scale /= 2.0;
+    } else {
+      rocket_sim.clock.time_scale = 1.0;
+    }
+  });
+};
+
+const update_time_controls = () => {
+  let span = document.getElementById("time_scale_span");
+  span.innerHTML = rocket_sim.clock.time_scale.toString();
 };
 
 const init_flight_infos = () => {
@@ -90,11 +126,13 @@ const animate = () => {
   rocket_sim.update3d();
   update_flight_infos();
   update_render_infos();
+  update_time_controls();
 
   requestAnimationFrame(animate);
 };
 
 rocket_controls();
+init_time_controls();
 init_flight_infos();
 init_render_infos();
 animate();
