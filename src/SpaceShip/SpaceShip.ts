@@ -1,20 +1,23 @@
-import * as THREE from "three";
-import { Object3D, Vector3 } from "three";
+import { Vector3 } from "three";
+import OrbitalBody from "../OrbitalBody/OrbitalBody";
 import { Engine } from "./Engine";
 import { SpaceShipPart } from "./SpaceShipPart";
 
-export default class SpaceShip extends Object3D {
-  engines: Array<Engine>;
+export default class SpaceShip extends OrbitalBody {
+  // engines: Array<Engine>;
   parts: Array<SpaceShipPart>;
-  position: THREE.Vector3;
-  velocity: THREE.Vector3;
+  position: Vector3;
+  velocity: Vector3;
+
+  center_of_mass: Vector3;
   constructor() {
     super();
-    this.engines = [];
+    // this.engines = [];
     this.parts = [];
-    this.engines.push(new Engine());
+    // this.parts.push(new Engine());
     this.position.set(0, 1, 0);
-    this.velocity = new THREE.Vector3(0, 0, 0);
+    this.velocity = new Vector3(0, 0, 0);
+    this.center_of_mass = new Vector3(0, 0, 0);
   }
 
   calculateShipMass(): number {
@@ -25,21 +28,8 @@ export default class SpaceShip extends Object3D {
 
     return mass;
   }
-  simulateStep(deltaTime: number) {
-    let gravity = new Vector3(0, -9.8 * deltaTime, 0);
-    this.velocity.add(gravity);
 
-    for (let engine of this.engines) {
-      if (engine instanceof Engine) {
-        this.velocity.add(
-          engine.thrustDirection.clone().multiplyScalar(-1 * deltaTime * engine.thrust * engine.throttle)
-        );
-      }
-    }
-    this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-    if (this.position.y < 0) {
-      this.position.y = 0;
-      this.velocity.set(0, 0, 0);
-    }
+  get engines(): Array<Engine> {
+    return this.parts.filter((element) => element instanceof Engine).map((element) => element as Engine);
   }
 }

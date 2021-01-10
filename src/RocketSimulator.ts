@@ -1,15 +1,24 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+
+import PartLoader from "./SpaceShip/PartLoader";
 
 import Clock from "./Clock";
-import Planet from "./Planet";
+import Planet from "./OrbitalBody/Planet";
 import SpaceShip from "./SpaceShip/SpaceShip";
+import Mission from "./Mission";
+import { Euler, Loader, Matrix3, Mesh, Vector3, WebGLInfo } from "three";
+import { Engine } from "./SpaceShip/Engine";
+import { FuelTank } from "./SpaceShip/FuelTank";
+import { Bounds } from "./SpaceShip/SpaceShipPart";
 
 export default class RocketSimulator {
   // SIMULATION stuff
 
   clock: Clock;
+
   currentPlanet: Planet;
   currentSpaceShip: SpaceShip;
   //THREEJS stuff
@@ -23,74 +32,79 @@ export default class RocketSimulator {
 
   activeCameraId: number = -1;
   activeCamera: THREE.PerspectiveCamera;
+
   glftLoader: GLTFLoader;
+
+  currentMission: Mission;
+
+  launchPad: THREE.Object3D;
+
   constructor() {
     console.log("Hello Universe ...");
     this.clock = new Clock(true);
+    this.clock.time_scale = 1.0;
     this.cameras = [];
-    this.currentSpaceShip = new SpaceShip();
-  }
+    this.currentMission = Mission.presets.basic();
+    this.launchPad = new THREE.Object3D();
+    this.currentPlanet = this.currentMission.launchPlanet;
+    this.currentSpaceShip = this.currentMission.ships[0];
 
-  initSimulation() {
-    this.currentPlanet = new Planet();
-    this.currentSpaceShip = new SpaceShip();
-
-    console.log(this.currentPlanet);
-    console.log(this.currentSpaceShip);
+    console.log(this.currentMission);
   }
 
   init3d(container: HTMLElement) {
-    this.glftLoader = new GLTFLoader();
-    this.glftLoader.load(
-      this.currentSpaceShip.engines[0].meshURL,
-      //loaded
-      (gltf) => {
-        console.log(gltf.scene);
-        this.currentSpaceShip.add(gltf.scene);
-      },
-      // progress
-      () => {},
-      // errors
-      () => {}
-    );
     this.container = container;
     this.scene = new THREE.Scene();
-    this.scene.add(this.currentSpaceShip);
+    this.scene.add(this.launchPad);
+    this.scene.add(this.currentPlanet);
+    this.launchPad.add(this.currentMission.ships[0]);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.shadowMap.enabled = true;
+
     this.canvas = this.renderer.domElement;
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.container.appendChild(this.renderer.domElement);
 
-    let pad_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 1000.0);
+    let pad_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
     pad_camera.position.x = 0.0;
     pad_camera.position.y = 5.0;
     pad_camera.position.z = -5.0;
     this.cameras.push(pad_camera);
+    this.launchPad.add(pad_camera);
 
     this.activeCameraId = 0;
     this.activeCamera = this.cameras[this.activeCameraId];
 
-    let ship_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 1000.0);
-    ship_camera.position.x = 0.0;
+    let ship_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
+    ship_camera.position.x = 10.0;
     ship_camera.position.y = 5.0;
-    ship_camera.position.z = -1.0;
+    ship_camera.position.z = 10.0;
     this.cameras.push(ship_camera);
-    this.currentSpaceShip.add(ship_camera);
+    this.currentMission.ships[0].add(ship_camera);
 
     this.orbitControls = new OrbitControls(this.cameras[this.activeCameraId], this.canvas);
     this.orbitControls.enablePan = false;
-    // this.orbitControls.dampingFactor = 0.5;
-    // this.orbitControls.enableDamping = true;
 
     this.sunlight = new THREE.DirectionalLight();
-    this.sunlight.position.setX(5);
-    this.sunlight.position.setY(5);
-    this.scene.add(this.sunlight);
+    this.sunlight.castShadow = true;
+    // this.sunlight.shadow.bias = -0.00009;
+    // this.sunlight.shadow.autoUpdate = true;
+    // this.sunlight.shadow.camera = this.activeCamera;
+    this.sunlight.position.setX(3);
+    this.sunlight.position.setY(10);
+    this.sunlight.position.setZ(5);
 
-    let ambientLight = new THREE.AmbientLight("white");
-    ambientLight.intensity = 0.1;
-    this.scene.add(ambientLight);
+    let target = new THREE.Object3D();
+    target.position.set(0, 0, 0);
+    this.sunlight.target = target;
+
+    this.currentSpaceShip.add(this.sunlight);
+    this.currentSpaceShip.add(target);
+
+    let ambientLight = new THREE.AmbientLight("lightblue");
+    ambientLight.intensity = 0.3;
+    this.launchPad.add(ambientLight);
 
     window.addEventListener("resize", () => {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -101,8 +115,10 @@ export default class RocketSimulator {
     });
     const event = new Event("resize");
     window.dispatchEvent(event);
+
     this.createObjects();
-    // this.update3d();
+    this.initPlanet();
+    this.initSpaceShip();
   }
 
   changeCamera() {
@@ -115,26 +131,155 @@ export default class RocketSimulator {
     this.orbitControls.center = this.currentSpaceShip.position;
     this.orbitControls.update();
   }
-  createObjects() {
-    let ground = new THREE.Mesh(new THREE.PlaneGeometry(10.0, 10.0), new THREE.MeshPhysicalMaterial({}));
-    ground.rotateX(-Math.PI / 2.0);
 
-    this.scene.add(ground);
+  async loadShipParts() {
+    let gltfs = [];
+    let heights = [];
+    let return_data = [];
+    const partLoader = new PartLoader();
+    let index = 0;
+    for (let part of this.currentSpaceShip.parts) {
+      if (part.jsonURL !== undefined) {
+        const json_data = await partLoader.load(part.jsonURL);
+
+        let height = json_data.bounds.max[1] - json_data.bounds.min[1];
+        return_data.push({
+          index,
+          part,
+          gltf: json_data.gltf,
+          height,
+        });
+      } else {
+        let height = 1.0; // default
+        if (part instanceof FuelTank) {
+          (part as FuelTank).createMesh();
+          height = part.bounds.max.y - part.bounds.min.y;
+        }
+
+        return_data.push({
+          index,
+          part,
+          gltf: undefined,
+          height,
+        });
+      }
+
+      index++;
+    }
+
+    return Promise.resolve(return_data);
+  }
+  initSpaceShip() {
+    this.loadShipParts().then((array) => {
+      let part_height = 0;
+      for (let item of array) {
+        console.log(item);
+        this.currentMission.ships[0].add(item.part);
+        item.part.position.y = part_height;
+        part_height += item.height;
+        item.part.castShadow = true;
+        if (item.gltf !== undefined) {
+          const gltf_loader = new GLTFLoader();
+          gltf_loader.load(
+            item.gltf, // url
+            //loaded
+            (gltf) => {
+              gltf.scene.castShadow = true;
+              console.log(gltf.scene);
+              for (let child of gltf.scene.children) {
+                if (child instanceof Mesh) {
+                  child.castShadow = true;
+                  child.receiveShadow = true;
+                }
+              }
+              item.part.add(gltf.scene);
+            },
+            // progress
+            () => {},
+            // errors
+            (error) => {
+              console.log(error);
+            }
+          );
+        } else {
+          // console.log("Creating Custom Mesh");
+          if (item.part instanceof FuelTank) {
+            let mesh = item.part.createMesh();
+            // part_height += item.height;
+            item.part.add(mesh);
+          }
+        }
+      }
+    });
+
+    // console.log(heights);
+  }
+  initPlanet() {
+    let planet = this.currentMission.launchPlanet;
+    let geometry = new THREE.SphereBufferGeometry(planet.radius * 1000, 60, 30);
+
+    if (planet.transformMode === "ship") {
+      geometry.translate(0, -planet.radius * 1000, 0);
+      geometry.computeBoundingBox();
+      let bounds = Bounds.fromBox3(geometry.boundingBox);
+      let center = bounds.center;
+      planet.centerOfMass.set(center.x, center.y, center.z);
+    }
+    let material = new THREE.MeshPhysicalMaterial({});
+
+    material.map = planet.texture;
+    let planet_mesh = new THREE.Mesh(geometry, material);
+
+    this.currentPlanet.add(planet_mesh);
+    // this.currentPlanet.position.y = -planet.radius * 1000;
+    // this.launchPad.rotateX(Math.PI * 0.5);
+  }
+
+  createObjects() {
+    let ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(1000.0, 1000.0),
+      new THREE.MeshPhysicalMaterial({ color: "brown" })
+    );
+    ground.rotateX(-Math.PI / 2.0);
+    ground.receiveShadow = true;
+    this.launchPad.add(ground);
     const axesHelper = new THREE.AxesHelper(5);
-    this.scene.add(axesHelper);
+    this.launchPad.add(axesHelper);
   }
 
   updateSimulation() {
     this.clock.update();
 
-    this.currentSpaceShip.simulateStep(this.clock.getDeltaTime());
+    let deltaTime = this.clock.getDeltaTime();
+
+    const ship = this.currentMission.ships[0];
+    let dir = ship.position.clone().sub(this.currentMission.launchPlanet.centerOfMass).normalize();
+    let gravity = dir.multiplyScalar(-this.currentMission.gravityAcceleration * deltaTime);
+
+    ship.velocity.add(gravity);
+
+    for (let engine of ship.engines) {
+      if (engine instanceof Engine) {
+        ship.velocity.add(
+          engine.thrustDirection.clone().multiplyScalar(-1 * deltaTime * engine.thrust * engine.throttle)
+        );
+      }
+    }
+    ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
+    if (ship.position.y < 0) {
+      ship.position.y = 0;
+      ship.velocity.set(0, 0, 0);
+    }
   }
 
   update3d() {
-    this.currentSpaceShip;
-
+    this.scene.position.x = -this.currentSpaceShip.position.x;
+    this.scene.position.y = -this.currentSpaceShip.position.y;
+    this.scene.position.z = -this.currentSpaceShip.position.z;
     this.renderer.render(this.scene, this.activeCamera);
+  }
 
-    // console.log(this.clock.getDeltaTime());
+  renderInfos(): WebGLInfo {
+    return this.renderer.info;
   }
 }

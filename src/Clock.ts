@@ -2,6 +2,7 @@ export default class Clock {
   started: boolean;
   auto_start: boolean;
 
+  time_scale: number;
   start_time: number = 0;
   millis: number = 0;
   old_millis: number = 0;
@@ -9,7 +10,7 @@ export default class Clock {
 
   constructor(auto_start: boolean = true) {
     this.auto_start = auto_start;
-
+    this.time_scale = 1.0;
     if (this.auto_start) {
       this.start();
     }
@@ -34,7 +35,7 @@ export default class Clock {
       this.old_millis = this.millis;
       this.millis = performance.now() - this.start_time;
 
-      this.delta_millis = this.millis - this.old_millis;
+      this.delta_millis = (this.millis - this.old_millis) * this.time_scale;
     }
     // console.log(this.millis);
   }

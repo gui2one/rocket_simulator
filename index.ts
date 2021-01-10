@@ -2,28 +2,101 @@ import RocketSimulator from "./src/RocketSimulator";
 import "./src/orbit_controls_fix.ts";
 import RangeSlider from "./src/UI/RangeSlider";
 
+import { SimpleLineGraph } from "./src/UI/SimpleLineGraph";
 let container = document.getElementById("sim_container");
 const rocket_sim = new RocketSimulator();
 
-rocket_sim.initSimulation();
 rocket_sim.init3d(container);
 
+const ship = rocket_sim.currentMission.ships[0];
+let altitude = ship.position.y;
+
+const altitude_graph_canvas = document.getElementById("altitude-graph");
+const altitude_graph = new SimpleLineGraph(altitude_graph_canvas as HTMLDivElement, "altitude", "red");
+
+const speed_graph_canvas = document.getElementById("speed-graph");
+const speed_graph = new SimpleLineGraph(speed_graph_canvas as HTMLDivElement, "speed", "green");
+
+setInterval(() => {
+  altitude_graph.appendData(ship.position.y);
+  speed_graph.appendData(ship.velocity.length());
+  // console.log(rocket_sim.currentMission.gravityAcceleration);
+}, 500);
 let thrust_slider;
 const rocket_controls = () => {
   const div = document.createElement("div");
   div.id = "controls";
   document.body.append(div);
   thrust_slider = new RangeSlider(div, "thrust", (value) => {
-    rocket_sim.currentSpaceShip.engines[0].throttle = value / 100.0;
+    ship.engines[0].throttle = value / 100.0;
   });
+};
+
+const init_flight_infos = () => {
+  const div = document.createElement("div");
+  document.body.appendChild(div);
+  div.id = "flight-infos";
+};
+
+const update_flight_infos = () => {
+  let div = document.getElementById("flight-infos");
+  altitude = ship.position.y;
+  let altitude_postfix = "m";
+  if (altitude > 1000) {
+    altitude_postfix = "Km";
+    altitude /= 1000;
+  }
+
+  let speed = ship.velocity.length();
+  let speed_postfix = "m/s";
+  if (speed > 1000) {
+    speed_postfix = "Km/s";
+    speed /= 1000;
+  }
+
+  let g_accel = rocket_sim.currentMission.gravityAcceleration;
+  div.innerHTML = `Altitude : ${altitude.toFixed(2)} ${altitude_postfix}`;
+  div.innerHTML += `<br>Speed : ${speed.toFixed(2)} ${speed_postfix}`;
+  div.innerHTML += `<br>G Accel : ${g_accel.toFixed(2)} m/s`;
+};
+
+const init_render_infos = () => {
+  const div = document.createElement("div");
+  document.body.appendChild(div);
+  div.id = "render-infos";
+};
+
+const update_render_infos = () => {
+  const div = document.getElementById("render-infos");
+  let infos = rocket_sim.renderInfos();
+
+  const geometries = infos.memory.geometries;
+  const textures = infos.memory.textures;
+
+  div.innerHTML = `<u>Memory</u> : <br>`;
+  div.innerHTML += `Geometries : ${geometries}<br>`;
+  div.innerHTML += `Textures : ${textures}<br>`;
+  div.innerHTML += `<br>`;
+
+  div.innerHTML += `<u>Render</u> : <br>`;
+  div.innerHTML += `Calls : ${infos.render.calls}<br>`;
+  div.innerHTML += `Triangles : ${infos.render.triangles}<br>`;
+  div.innerHTML += `Points : ${infos.render.points}<br>`;
+  div.innerHTML += `Lines : ${infos.render.lines}<br>`;
+  div.innerHTML += `Frame : ${infos.render.frame}<br>`;
 };
 const animate = () => {
   rocket_sim.updateSimulation();
   rocket_sim.update3d();
+  update_flight_infos();
+  update_render_infos();
+
   requestAnimationFrame(animate);
 };
 
 rocket_controls();
+init_flight_infos();
+init_render_infos();
 animate();
 
 window.addEventListener("keypress", (event) => {
@@ -32,15 +105,19 @@ window.addEventListener("keypress", (event) => {
       rocket_sim.changeCamera();
       break;
     case "f":
-      // rocket_sim.currentSpaceShip.engines[0].throttle = 1;
-      // console.log(rocket_sim.currentSpaceShip.engines[0].throttle);
+      // ship.engines[0].throttle = 1;
+      // console.log(ship.engines[0].throttle);
       thrust_slider.value = 100;
       break;
     case "x":
-      // rocket_sim.currentSpaceShip.engines[0].throttle = 0;
+      // ship.engines[0].throttle = 0;
       thrust_slider.value = 0.0;
       break;
     default:
       break;
   }
 });
+
+let resize_event = new Event("resize");
+window.dispatchEvent(resize_event);
+window.addEventListener("resize", () => {});
