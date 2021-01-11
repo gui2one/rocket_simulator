@@ -8,6 +8,8 @@ export default class Clock {
   old_millis: number = 0;
   delta_millis: number = 0;
 
+  scaled_millis: number = 0;
+
   constructor(auto_start: boolean = true) {
     this.auto_start = auto_start;
     this.time_scale = 1.0;
@@ -36,6 +38,7 @@ export default class Clock {
       this.millis = performance.now() - this.start_time;
 
       this.delta_millis = (this.millis - this.old_millis) * this.time_scale;
+      this.scaled_millis += this.delta_millis * this.time_scale;
     }
     // console.log(this.millis);
   }

@@ -3,6 +3,7 @@ import "./src/orbit_controls_fix.ts";
 import RangeSlider from "./src/UI/RangeSlider";
 
 import { SimpleLineGraph } from "./src/UI/SimpleLineGraph";
+import { Clock } from "three";
 let container = document.getElementById("sim_container");
 const rocket_sim = new RocketSimulator();
 
@@ -17,11 +18,34 @@ const altitude_graph = new SimpleLineGraph(altitude_graph_canvas as HTMLDivEleme
 const speed_graph_canvas = document.getElementById("speed-graph");
 const speed_graph = new SimpleLineGraph(speed_graph_canvas as HTMLDivElement, "speed", "green");
 
+const acceleration_graph_canvas = document.getElementById("acceleration-graph");
+const acceleration_graph = new SimpleLineGraph(acceleration_graph_canvas as HTMLDivElement, "G accel", "white");
+acceleration_graph.max_value = 9.8;
+let old_time = 0.0;
+let new_time = 0.0;
 setInterval(() => {
-  altitude_graph.appendData(ship.position.y);
-  speed_graph.appendData(ship.velocity.length());
-  // console.log(rocket_sim.currentMission.gravityAcceleration);
-}, 500);
+  old_time = new_time;
+  new_time = rocket_sim.clock.millis;
+
+  let local_delta = new_time - old_time;
+  altitude_graph.appendData(
+    //
+    ship.position.y,
+    local_delta,
+    rocket_sim.clock.time_scale
+  );
+  speed_graph.appendData(
+    //
+    ship.velocity.length(),
+    local_delta,
+    rocket_sim.clock.time_scale
+  );
+  acceleration_graph.appendData(
+    rocket_sim.currentMission.gravityAcceleration,
+    local_delta,
+    rocket_sim.clock.time_scale
+  );
+}, 200);
 let thrust_slider;
 const controls_div = document.getElementById("controls");
 const rocket_controls = () => {
