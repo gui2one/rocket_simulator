@@ -64,14 +64,15 @@ const init_time_controls = () => {
 
   let btn_minus = document.createElement("button");
   let btn_plus = document.createElement("button");
-  btn_minus.innerHTML = "/2";
-  btn_plus.innerHTML = "x2";
+  btn_minus.innerHTML = "2<<";
+  btn_plus.innerHTML = ">>2";
   div.appendChild(btn_minus);
   div.appendChild(btn_plus);
 
   let span = document.createElement("span");
   span.id = "time_scale_span";
-  span.innerHTML = rocket_sim.clock.time_scale.toString();
+  let time_scale = rocket_sim.clock.time_scale.toString();
+  span.innerHTML = `Time Scale : ${time_scale}`;
   div.appendChild(span);
 
   btn_plus.addEventListener("click", () => {
@@ -89,7 +90,8 @@ const init_time_controls = () => {
 
 const update_time_controls = () => {
   let span = document.getElementById("time_scale_span");
-  span.innerHTML = rocket_sim.clock.time_scale.toString();
+  let time_scale = rocket_sim.clock.time_scale.toString();
+  span.innerHTML = ` Time Scale : ${time_scale}`;
 };
 
 const init_flight_infos = () => {

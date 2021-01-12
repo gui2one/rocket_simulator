@@ -3,6 +3,12 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { CopyShader } from "three/examples/jsm/shaders/CopyShader";
+import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
+
 import PartLoader from "./SpaceShip/PartLoader";
 
 import Clock from "./Clock";
@@ -23,7 +29,12 @@ export default class RocketSimulator {
   currentSpaceShip: SpaceShip;
   //THREEJS stuff
   scene: THREE.Scene;
+
   renderer: THREE.WebGLRenderer;
+  effectComposer: EffectComposer;
+  renderPass: RenderPass;
+  fxaaPass: ShaderPass;
+
   cameras: Array<THREE.PerspectiveCamera>;
   sunlight: THREE.DirectionalLight;
   container: HTMLElement;
@@ -58,7 +69,7 @@ export default class RocketSimulator {
     this.scene.add(this.launchPad);
     this.scene.add(this.currentPlanet);
     this.launchPad.add(this.currentMission.ships[0]);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, logarithmicDepthBuffer: true });
     this.renderer.shadowMap.enabled = true;
 
     this.canvas = this.renderer.domElement;
@@ -106,8 +117,21 @@ export default class RocketSimulator {
     ambientLight.intensity = 0.3;
     this.launchPad.add(ambientLight);
 
+    this.renderPass = new RenderPass(this.scene, this.activeCamera);
+    this.fxaaPass = new ShaderPass(FXAAShader);
+    this.effectComposer = new EffectComposer(this.renderer);
+
+    this.effectComposer.addPass(this.renderPass);
+    this.effectComposer.addPass(this.fxaaPass);
+
     window.addEventListener("resize", () => {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.effectComposer.setSize(window.innerWidth, window.innerHeight);
+      const pixelRatio = this.renderer.getPixelRatio();
+
+      this.fxaaPass.material.uniforms["resolution"].value.x = 1 / (container.offsetWidth * pixelRatio);
+      this.fxaaPass.material.uniforms["resolution"].value.y = 1 / (container.offsetHeight * pixelRatio);
+
       for (let cam of this.cameras) {
         cam.aspect = window.innerWidth / window.innerHeight;
         cam.updateProjectionMatrix();
@@ -130,6 +154,7 @@ export default class RocketSimulator {
     this.orbitControls.object = this.activeCamera;
     this.orbitControls.center = this.currentSpaceShip.position;
     this.orbitControls.update();
+    this.renderPass.camera = this.activeCamera;
   }
 
   async loadShipParts() {
@@ -276,7 +301,8 @@ export default class RocketSimulator {
     this.scene.position.x = -this.currentSpaceShip.position.x;
     this.scene.position.y = -this.currentSpaceShip.position.y;
     this.scene.position.z = -this.currentSpaceShip.position.z;
-    this.renderer.render(this.scene, this.activeCamera);
+    // this.renderer.render(this.scene, this.activeCamera);
+    this.effectComposer.render();
   }
 
   renderInfos(): WebGLInfo {
