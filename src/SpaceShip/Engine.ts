@@ -7,7 +7,7 @@ export class Engine extends SpaceShipPart {
   thrust: number = 10.0; // in Kilo Newtons ...?
   throttle: number = 0.0;
   thrustDirection: THREE.Vector3;
-  fuelRate: number = 1.0; // Kg/s
+  flowRate: number = 1.0; // Kg/s
 
   fuelTanks: Array<FuelTank>;
   flamedOut: boolean = false;
@@ -15,7 +15,7 @@ export class Engine extends SpaceShipPart {
   constructor() {
     super();
     this.thrustDirection = new THREE.Vector3(0, -1, 0);
-    this.meshURL = "assets/gltf/engine_test_1.glb";
+    // this.meshURL = "assets/gltf/engine_test_1.glb";
     this.jsonURL = "assets/gltf/engine_test_1.json";
     this.fuelTanks = [];
     this.mass = 10;
@@ -29,6 +29,7 @@ export class Engine extends SpaceShipPart {
       let engine = new Engine();
       engine.mass = 470;
       engine.thrust = 845;
+      engine.flowRate = 236.6;
       return engine;
     },
   };

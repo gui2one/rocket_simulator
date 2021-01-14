@@ -34,7 +34,8 @@ export default class Mission {
       mission.ships.push(ship);
       const engine = Engine.presets.Merlin1D();
       const fuelTank = new FuelTank();
-      fuelTank.setHeight(10);
+      fuelTank.setHeight(3);
+      fuelTank.setRadius(1.1);
       ship.parts.push(engine);
       ship.parts.push(fuelTank);
       engine.fuelTanks.push(fuelTank);

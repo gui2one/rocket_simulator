@@ -20,6 +20,7 @@ import { Engine } from "./SpaceShip/Engine";
 import { FuelTank } from "./SpaceShip/FuelTank";
 import { Bounds } from "./SpaceShip/SpaceShipPart";
 
+import * as Utils from "./Utils";
 export default class RocketSimulator {
   // SIMULATION stuff
 
@@ -287,10 +288,10 @@ export default class RocketSimulator {
     //// engines
 
     ship.engines.forEach((engine, engine_index) => {
-      let quantity = engine.fuelRate * engine.throttle * deltaTime;
+      let quantity = engine.flowRate * engine.throttle * deltaTime;
       engine.fuelTanks.forEach((tank, tank_index) => {
         if (tank.fuelAmount > 0.0) {
-          tank.fuelAmount -= quantity / tank.getVolume();
+          tank.fuelAmount -= quantity / (tank.getVolume() * 1000);
           // console.log(tank.fuelAmount);
         } else {
           tank.fuelAmount = 0;
@@ -305,13 +306,9 @@ export default class RocketSimulator {
         //// compute thrust ...
         let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
 
-        let force = engine.thrust - shipWeight;
-        console.log("force", 1 * engine.throttle * (force / ship.computeShipMass()));
-        let thrust = deltaTime * engine.thrust * engine.throttle;
-        // let thrust = force;
-        ship.velocity.add(
-          engine.thrustDirection.clone().multiplyScalar(1 * engine.throttle * (force / ship.computeShipMass()))
-        );
+        let force = Utils.KNToKg(engine.thrust) - shipWeight;
+        // console.log("force", force);
+        ship.velocity.add(engine.thrustDirection.clone().multiplyScalar(-1 * engine.throttle * (force / shipWeight)));
       }
     }
     ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));

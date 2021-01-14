@@ -34,6 +34,7 @@ export class FuelTank extends SpaceShipPart {
     this.computeVolume();
   }
   getFuelMass(): number {
+    this.computeVolume();
     return this.fuel.density * this.fuelAmount * this.volume;
   }
 

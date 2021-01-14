@@ -5,7 +5,7 @@ import RangeSlider from "./src/UI/RangeSlider";
 import TankGauge from "./src/UI/TankGauge";
 
 import { SimpleLineGraph } from "./src/UI/SimpleLineGraph";
-
+import * as Utils from "./src/Utils";
 let thrust_slider;
 let gauge_1;
 let container = document.getElementById("sim_container");
@@ -134,10 +134,12 @@ const update_flight_infos = () => {
 
   // console.log(ship);
   let ship_mass = ship.computeShipMass();
+  let engine_thrust = ship.engines[0].thrust;
   div.innerHTML = `Altitude : ${altitude.toFixed(2)} ${altitude_postfix}`;
   div.innerHTML += `<br>Speed : ${speed.toFixed(2)} ${speed_postfix}`;
   div.innerHTML += `<br>G Accel : ${g_accel.toFixed(12)} m/s`;
   div.innerHTML += `<br>Ship Mass : ${ship_mass.toFixed(2)}`;
+  div.innerHTML += `<br>Engine 1 thrust : ${Utils.KNToKg(engine_thrust)}`;
 };
 
 const init_render_infos = () => {
