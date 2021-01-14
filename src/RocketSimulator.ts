@@ -198,7 +198,7 @@ export default class RocketSimulator {
     this.loadShipParts().then((array) => {
       let part_height = 0;
       for (let item of array) {
-        console.log(item);
+        // console.log(item);
         this.currentMission.ships[0].add(item.part);
         item.part.position.y = part_height;
         part_height += item.height;
@@ -210,7 +210,7 @@ export default class RocketSimulator {
             //loaded
             (gltf) => {
               gltf.scene.castShadow = true;
-              console.log(gltf.scene);
+              // console.log(gltf.scene);
               for (let child of gltf.scene.children) {
                 if (child instanceof Mesh) {
                   child.castShadow = true;
@@ -273,20 +273,44 @@ export default class RocketSimulator {
   }
 
   updateSimulation() {
+    const ship = this.currentMission.ships[0];
+    //// time management
     this.clock.update();
-
     let deltaTime = this.clock.getDeltaTime();
 
-    const ship = this.currentMission.ships[0];
+    //// gravity
     let dir = ship.position.clone().sub(this.currentMission.launchPlanet.centerOfMass).normalize();
     let gravity = dir.multiplyScalar(-this.currentMission.gravityAcceleration * deltaTime);
 
     ship.velocity.add(gravity);
 
+    //// engines
+
+    ship.engines.forEach((engine, engine_index) => {
+      let quantity = engine.fuelRate * engine.throttle * deltaTime;
+      engine.fuelTanks.forEach((tank, tank_index) => {
+        if (tank.fuelAmount > 0.0) {
+          tank.fuelAmount -= quantity / tank.getVolume();
+          // console.log(tank.fuelAmount);
+        } else {
+          tank.fuelAmount = 0;
+          tank.empty = true;
+        }
+      });
+      engine.flamedOut = engine.fuelTanks.every((tank) => tank.empty);
+    });
+
     for (let engine of ship.engines) {
-      if (engine instanceof Engine) {
+      if (!engine.flamedOut) {
+        //// compute thrust ...
+        let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
+
+        let force = engine.thrust - shipWeight;
+        console.log("force", 1 * engine.throttle * (force / ship.computeShipMass()));
+        let thrust = deltaTime * engine.thrust * engine.throttle;
+        // let thrust = force;
         ship.velocity.add(
-          engine.thrustDirection.clone().multiplyScalar(-1 * deltaTime * engine.thrust * engine.throttle)
+          engine.thrustDirection.clone().multiplyScalar(1 * engine.throttle * (force / ship.computeShipMass()))
         );
       }
     }

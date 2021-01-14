@@ -1,9 +1,13 @@
 import RocketSimulator from "./src/RocketSimulator";
 import "./src/orbit_controls_fix.ts";
+
 import RangeSlider from "./src/UI/RangeSlider";
+import TankGauge from "./src/UI/TankGauge";
 
 import { SimpleLineGraph } from "./src/UI/SimpleLineGraph";
-import { Clock } from "three";
+
+let thrust_slider;
+let gauge_1;
 let container = document.getElementById("sim_container");
 const rocket_sim = new RocketSimulator();
 
@@ -46,7 +50,7 @@ setInterval(() => {
     rocket_sim.clock.time_scale
   );
 }, 200);
-let thrust_slider;
+
 const controls_div = document.getElementById("controls");
 const rocket_controls = () => {
   const div = document.createElement("div");
@@ -55,6 +59,16 @@ const rocket_controls = () => {
   thrust_slider = new RangeSlider(div, "thrust", (value) => {
     ship.engines[0].throttle = value / 100.0;
   });
+
+  let gauge_div = document.createElement("div");
+  gauge_div.id = "gauge_1";
+  gauge_1 = new TankGauge(gauge_div, ship.fuelTanks[0]);
+  gauge_div.style.position = "relative";
+  gauge_div.style.width = "100%";
+  gauge_div.style.height = "50px";
+  gauge_div.style.outline = "1px solid white";
+
+  div.appendChild(gauge_div);
 };
 
 const init_time_controls = () => {
@@ -117,9 +131,13 @@ const update_flight_infos = () => {
   }
 
   let g_accel = rocket_sim.currentMission.gravityAcceleration;
+
+  // console.log(ship);
+  let ship_mass = ship.computeShipMass();
   div.innerHTML = `Altitude : ${altitude.toFixed(2)} ${altitude_postfix}`;
   div.innerHTML += `<br>Speed : ${speed.toFixed(2)} ${speed_postfix}`;
-  div.innerHTML += `<br>G Accel : ${g_accel.toFixed(2)} m/s`;
+  div.innerHTML += `<br>G Accel : ${g_accel.toFixed(12)} m/s`;
+  div.innerHTML += `<br>Ship Mass : ${ship_mass.toFixed(2)}`;
 };
 
 const init_render_infos = () => {
@@ -154,6 +172,7 @@ const animate = () => {
   update_render_infos();
   update_time_controls();
 
+  gauge_1.update();
   requestAnimationFrame(animate);
 };
 

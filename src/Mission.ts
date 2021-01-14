@@ -32,8 +32,12 @@ export default class Mission {
       mission.launchPlanet = Planet.presets.Earth();
       let ship = new SpaceShip();
       mission.ships.push(ship);
-      ship.parts.push(new Engine());
-      ship.parts.push(new FuelTank());
+      const engine = Engine.presets.Merlin1D();
+      const fuelTank = new FuelTank();
+      fuelTank.setHeight(10);
+      ship.parts.push(engine);
+      ship.parts.push(fuelTank);
+      engine.fuelTanks.push(fuelTank);
       let nose_cone = new SpaceShipPart();
       nose_cone.jsonURL = "/assets/gltf/nose_cone_001.json";
       ship.parts.push(nose_cone);

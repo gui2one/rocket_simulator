@@ -49,7 +49,7 @@ export class Bounds {
   }
 }
 export class SpaceShipPart extends THREE.Object3D {
-  mass: number;
+  mass: number = 1.0;
   meshURL: string;
   jsonURL: string;
   bounds: any;

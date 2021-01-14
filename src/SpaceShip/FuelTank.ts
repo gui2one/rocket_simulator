@@ -6,14 +6,44 @@ import { SpaceShipPart, Bounds } from "./SpaceShipPart";
 export class FuelTank extends SpaceShipPart {
   fuel: Fuel;
   fuelAmount: number = 1.0;
-  volume: number = 1.0;
-  radius: number = 1.0;
-  height: number = 1.0;
+  private volume: number = 1.0; // m3
+  private radius: number = 1.0; // meters
+  private height: number = 1.0; // meters
+  empty: boolean = false;
   constructor() {
     super();
+    this.fuel = Fuel.presets.CH4__LOX();
+    this.computeVolume();
   }
 
-  computeVolume() {}
+  computeVolume() {
+    // volume of the spherical part
+    let volume = (4.0 / 3.0) * Math.PI * this.radius;
+    // volume of the cylindrical part
+    volume += Math.PI * (this.radius * this.radius) * this.height;
+
+    this.volume = volume;
+  }
+
+  setHeight(height: number) {
+    this.height = height;
+    this.computeVolume();
+  }
+  setRadius(radius: number) {
+    this.radius = radius;
+    this.computeVolume();
+  }
+  getFuelMass(): number {
+    return this.fuel.density * this.fuelAmount * this.volume;
+  }
+
+  getMass(): number {
+    return this.mass + this.getFuelMass();
+  }
+
+  getVolume(): number {
+    return this.volume;
+  }
 
   createMesh(): Mesh {
     let mesh = new Mesh();
@@ -45,6 +75,23 @@ export class FuelTank extends SpaceShipPart {
 }
 
 class Fuel {
+  /**
+   * sources : http://www.braeunig.us/space/propel.htm
+   */
   type: string;
-  density: number;
+  density: number; // Kg / m3
+
+  constructor(type: string, density: number) {
+    this.type = type;
+    this.density = density;
+  }
+  static presets = {
+    CH4__LOX: (): Fuel => {
+      //0.423 g/ml
+      //423.0 g/l
+      // 423 000 g/m3
+      // 423 kg/m3
+      return new Fuel("CH4__LOX", 423.0);
+    },
+  };
 }
