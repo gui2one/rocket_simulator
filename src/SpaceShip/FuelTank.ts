@@ -1,11 +1,19 @@
 import * as THREE from "three";
 import { BufferGeometryUtils } from "three/examples/jsm/utils/BufferGeometryUtils";
-import { CylinderBufferGeometry, Mesh, MeshPhysicalMaterial, SphereBufferGeometry } from "three";
+import {
+  CylinderBufferGeometry,
+  Mesh,
+  MeshPhysicalMaterial,
+  SphereBufferGeometry,
+  TetrahedronBufferGeometry,
+  Vector3,
+} from "three";
 import { SpaceShipPart, Bounds } from "./SpaceShipPart";
-
+import { lerp } from "../Utils";
 export class FuelTank extends SpaceShipPart {
   fuel: Fuel;
   fuelAmount: number = 1.0;
+
   private volume: number = 1.0; // m3
   private radius: number = 1.0; // meters
   private height: number = 1.0; // meters
@@ -13,6 +21,7 @@ export class FuelTank extends SpaceShipPart {
   constructor() {
     super();
     this.fuel = Fuel.presets.CH4__LOX();
+    this.mass = 1000; // kg dry mass
     this.computeVolume();
   }
 
@@ -33,12 +42,28 @@ export class FuelTank extends SpaceShipPart {
     this.radius = radius;
     this.computeVolume();
   }
+  computeCenterOfMass() {
+    /**
+     * fuelCenterOfMassY is calculated considering the tank as a cylinder, not a capsule, as it
+     * is in the sim. Good enough for now:
+     */
+    let fuelCenterOfMassY = (this.fuelAmount * (this.height + this.radius * 2)) / 2.0;
+    let tankCenterOfMassY = (this.height + this.radius * 2) / 2.0;
+
+    let fullMass = this.getFuelMass() + this.mass;
+
+    let fuelMassRatio = this.getFuelMass() / fullMass;
+
+    this.centerOfMass.position.y = lerp(fuelMassRatio, tankCenterOfMassY, fuelCenterOfMassY);
+  }
   getFuelMass(): number {
     this.computeVolume();
+
     return this.fuel.density * this.fuelAmount * this.volume;
   }
 
   getMass(): number {
+    this.computeCenterOfMass();
     return this.mass + this.getFuelMass();
   }
 
@@ -47,6 +72,9 @@ export class FuelTank extends SpaceShipPart {
   }
 
   createMesh(): Mesh {
+    /**
+     * build a capsule shape with a cylinder and two half spheres
+     */
     let mesh = new Mesh();
     let num_segs = 42;
     mesh.geometry = new CylinderBufferGeometry(this.radius, this.radius, this.height, num_segs, 3, true);
@@ -64,7 +92,7 @@ export class FuelTank extends SpaceShipPart {
     mesh.geometry = BufferGeometryUtils.mergeBufferGeometries([mesh.geometry, half_sphere]);
 
     // mesh.geometry.computeVertexNormals();
-    mesh.material = new MeshPhysicalMaterial({ roughness: 0.5, color: "red" });
+    mesh.material = new MeshPhysicalMaterial({ roughness: 0.5, color: "white" });
 
     mesh.geometry.computeBoundingBox();
     this.bounds = Bounds.fromBox3(mesh.geometry.boundingBox);

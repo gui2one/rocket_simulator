@@ -7,6 +7,8 @@ import TankGauge from "./src/UI/TankGauge";
 import { SimpleLineGraph } from "./src/UI/SimpleLineGraph";
 import * as Utils from "./src/Utils";
 let thrust_slider;
+let fuel_amount_slider;
+let start_fuel_amount = 1.0;
 let gauge_1;
 let container = document.getElementById("sim_container");
 const rocket_sim = new RocketSimulator();
@@ -27,6 +29,7 @@ const acceleration_graph = new SimpleLineGraph(acceleration_graph_canvas as HTML
 acceleration_graph.max_value = 9.8;
 let old_time = 0.0;
 let new_time = 0.0;
+
 setInterval(() => {
   old_time = new_time;
   new_time = rocket_sim.clock.millis;
@@ -59,6 +62,14 @@ const rocket_controls = () => {
   thrust_slider = new RangeSlider(div, "thrust", (value) => {
     ship.engines[0].throttle = value / 100.0;
   });
+
+  fuel_amount_slider = new RangeSlider(div, "Fuel Amount", (value) => {
+    // console.log(ship.fuelTanks[0].fuelAmount);
+    // start_fuel_amount = parseFloat(value) / 100.0;
+    ship.fuelTanks[0].fuelAmount = parseFloat(value) / 100.0;
+  });
+
+  fuel_amount_slider.setValue(100);
 
   let gauge_div = document.createElement("div");
   gauge_div.id = "gauge_1";
@@ -135,11 +146,15 @@ const update_flight_infos = () => {
   // console.log(ship);
   let ship_mass = ship.computeShipMass();
   let engine_thrust = ship.engines[0].thrust;
+  let TWR = (engine_thrust * g_accel) / ship_mass;
+
   div.innerHTML = `Altitude : ${altitude.toFixed(2)} ${altitude_postfix}`;
   div.innerHTML += `<br>Speed : ${speed.toFixed(2)} ${speed_postfix}`;
   div.innerHTML += `<br>G Accel : ${g_accel.toFixed(12)} m/s`;
+  div.innerHTML += `<br>`;
   div.innerHTML += `<br>Ship Mass : ${ship_mass.toFixed(2)}`;
   div.innerHTML += `<br>Engine 1 thrust : ${Utils.KNToKg(engine_thrust)}`;
+  div.innerHTML += `<br>TWR : ${TWR.toFixed(5)}`;
 };
 
 const init_render_infos = () => {
@@ -175,6 +190,7 @@ const animate = () => {
   update_time_controls();
 
   gauge_1.update();
+  // console.log(ship.fuelTanks[0].fuelAmount);
   requestAnimationFrame(animate);
 };
 
@@ -185,6 +201,8 @@ init_render_infos();
 animate();
 
 window.addEventListener("keypress", (event) => {
+  console.log(event.key);
+
   switch (event.key) {
     case "c":
       rocket_sim.changeCamera();
@@ -192,11 +210,15 @@ window.addEventListener("keypress", (event) => {
     case "f":
       // ship.engines[0].throttle = 1;
       // console.log(ship.engines[0].throttle);
-      thrust_slider.value = 100;
+      thrust_slider.setValue(100);
       break;
     case "x":
       // ship.engines[0].throttle = 0;
-      thrust_slider.value = 0.0;
+      thrust_slider.setValue(0.0);
+      break;
+    case " ": // space bar
+      // ship.engines[0].throttle = 0;
+      ship.engines[0].activate(start_fuel_amount);
       break;
     default:
       break;

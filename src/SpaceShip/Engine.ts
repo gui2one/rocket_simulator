@@ -9,6 +9,7 @@ export class Engine extends SpaceShipPart {
   thrustDirection: THREE.Vector3;
   flowRate: number = 1.0; // Kg/s
 
+  activated: boolean = false;
   fuelTanks: Array<FuelTank>;
   flamedOut: boolean = false;
 
@@ -21,6 +22,13 @@ export class Engine extends SpaceShipPart {
     this.mass = 10;
   }
 
+  activate(start_fuel_amount: number) {
+    console.log(start_fuel_amount);
+
+    this.fuelTanks[0].fuelAmount = start_fuel_amount;
+    this.activated = true;
+  }
+
   createGeometry() {}
 
   static presets = {
@@ -29,6 +37,7 @@ export class Engine extends SpaceShipPart {
       let engine = new Engine();
       engine.mass = 470;
       engine.thrust = 845;
+      // engine.thrust = 200;
       engine.flowRate = 236.6;
       return engine;
     },

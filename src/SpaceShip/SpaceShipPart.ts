@@ -53,8 +53,15 @@ export class SpaceShipPart extends THREE.Object3D {
   meshURL: string;
   jsonURL: string;
   bounds: any;
+
+  centerOfMass: THREE.Mesh;
+
   constructor() {
     super();
     this.bounds = new Bounds();
+    this.centerOfMass = new THREE.Mesh();
+    this.centerOfMass.name = "center of mass";
+
+    this.add(this.centerOfMass);
   }
 }

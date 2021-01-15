@@ -34,12 +34,16 @@ export default class Mission {
       mission.ships.push(ship);
       const engine = Engine.presets.Merlin1D();
       const fuelTank = new FuelTank();
-      fuelTank.setHeight(3);
-      fuelTank.setRadius(1.1);
+      console.log(fuelTank.centerOfMass);
+
+      fuelTank.setHeight(3.6);
+      fuelTank.setRadius(0.9);
+      fuelTank.fuelAmount = 1;
       ship.parts.push(engine);
       ship.parts.push(fuelTank);
       engine.fuelTanks.push(fuelTank);
       let nose_cone = new SpaceShipPart();
+      nose_cone.mass = 30;
       nose_cone.jsonURL = "/assets/gltf/nose_cone_001.json";
       ship.parts.push(nose_cone);
       mission.launchLatitude = 48.0833;

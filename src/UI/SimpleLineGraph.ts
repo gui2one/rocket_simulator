@@ -5,14 +5,21 @@ export interface DataPoint {
 }
 
 export class SimpleLineGraph {
+  max_samples: number = 100;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   title: string;
   max_value: number;
+  min_value: number;
+  max_value_span: HTMLElement;
+  min_value_span: HTMLElement;
+
   max_time: number;
   line_color: string;
   private data: Array<DataPoint>;
   constructor(container: HTMLDivElement, title?: string, color?: string) {
+    this.min_value = Infinity;
+
     this.canvas = document.createElement("canvas");
     container.appendChild(this.canvas);
 
@@ -23,15 +30,30 @@ export class SimpleLineGraph {
     if (color) this.line_color = color;
     else this.line_color = "white";
 
-    const el = document.createElement("span");
-    el.innerHTML = title;
-    container.appendChild(el);
-    el.style.position = "absolute";
-    el.style.padding = "0.3em";
-    el.style.top = "0px";
-    el.style.left = "0px";
-    el.style.color = this.line_color;
+    const title_element = document.createElement("span");
+    title_element.innerHTML = title;
+    container.appendChild(title_element);
+    title_element.style.position = "absolute";
+    title_element.style.padding = "0.3em";
+    title_element.style.top = "0px";
+    title_element.style.left = "0px";
+    title_element.style.color = this.line_color;
 
+    this.max_value_span = document.createElement("span");
+    this.min_value_span = document.createElement("span");
+
+    this.max_value_span.style.position = "absolute";
+    this.max_value_span.style.padding = "0.3em";
+    this.max_value_span.style.top = "0px";
+    this.max_value_span.style.right = "0px";
+
+    this.min_value_span.style.position = "absolute";
+    this.min_value_span.style.padding = "0.3em";
+    this.min_value_span.style.bottom = "0px";
+    this.min_value_span.style.right = "0px";
+    // this.max_value_span.style.color = this.line_color;
+    container.appendChild(this.max_value_span);
+    container.appendChild(this.min_value_span);
     this.ctx = this.canvas.getContext("2d");
     this.data = [];
 
@@ -46,6 +68,12 @@ export class SimpleLineGraph {
     this.data.push({ value, time, time_scale });
     if (value > this.max_value) this.max_value = value;
     // this.max_time = max_time;
+
+    if (this.data.length > this.max_samples) {
+      this.data.splice(0, 1);
+    }
+    const values_temp = this.data.map((item) => item.value);
+    this.min_value = Math.min(...values_temp);
     this.update();
 
     // console.log(this.data);
@@ -53,12 +81,12 @@ export class SimpleLineGraph {
   update() {
     this.ctx.lineWidth = 2.0;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
+    this.ctx.lineJoin = "bevel";
+    this.max_value_span.innerHTML = this.max_value.toFixed(2);
+    this.min_value_span.innerHTML = this.min_value.toFixed(2);
     let w, h;
     w = this.canvas.width;
     h = this.canvas.height;
-
-    // let max_value = Math.max(...this.data, this.max_value);
 
     if (this.data.length > 0) {
       let inc = 0;
@@ -70,7 +98,9 @@ export class SimpleLineGraph {
       this.data.forEach((data_point, index) => {
         let x = time_offset * (w / this.max_time);
         // console.log(time_offset);
-        let y = (1 - data_point.value / this.max_value) * h;
+
+        const val = data_point.value / this.max_value;
+        let y = (1 - val) * h;
 
         this.ctx.lineTo(x, y);
         time_offset += data_point.time * data_point.time_scale;

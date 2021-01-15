@@ -70,7 +70,7 @@ export default class RocketSimulator {
     this.scene.add(this.launchPad);
     this.scene.add(this.currentPlanet);
     this.launchPad.add(this.currentMission.ships[0]);
-    this.renderer = new THREE.WebGLRenderer({ antialias: false, logarithmicDepthBuffer: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
     this.renderer.shadowMap.enabled = true;
 
     this.canvas = this.renderer.domElement;
@@ -100,7 +100,7 @@ export default class RocketSimulator {
 
     this.sunlight = new THREE.DirectionalLight();
     this.sunlight.castShadow = true;
-    // this.sunlight.shadow.bias = -0.00009;
+    // this.sunlight.shadow.bias = -0.0001;
     // this.sunlight.shadow.autoUpdate = true;
     // this.sunlight.shadow.camera = this.activeCamera;
     this.sunlight.position.setX(3);
@@ -120,10 +120,11 @@ export default class RocketSimulator {
 
     this.renderPass = new RenderPass(this.scene, this.activeCamera);
     this.fxaaPass = new ShaderPass(FXAAShader);
+    // this.fxaaPass
     this.effectComposer = new EffectComposer(this.renderer);
 
     this.effectComposer.addPass(this.renderPass);
-    this.effectComposer.addPass(this.fxaaPass);
+    // this.effectComposer.addPass(this.fxaaPass);
 
     window.addEventListener("resize", () => {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -165,29 +166,33 @@ export default class RocketSimulator {
     const partLoader = new PartLoader();
     let index = 0;
     for (let part of this.currentSpaceShip.parts) {
-      if (part.jsonURL !== undefined) {
-        const json_data = await partLoader.load(part.jsonURL);
+      if (part instanceof SpaceShip == false) {
+        if (part.jsonURL !== undefined) {
+          const json_data = await partLoader.load(part.jsonURL);
 
-        let height = json_data.bounds.max[1] - json_data.bounds.min[1];
-        return_data.push({
-          index,
-          part,
-          gltf: json_data.gltf,
-          height,
-        });
-      } else {
-        let height = 1.0; // default
-        if (part instanceof FuelTank) {
-          (part as FuelTank).createMesh();
-          height = part.bounds.max.y - part.bounds.min.y;
+          let height = json_data.bounds.max[1] - json_data.bounds.min[1];
+          let center_of_mass = json_data.center_of_mass;
+          return_data.push({
+            index,
+            part,
+            gltf: json_data.gltf,
+            height,
+            center_of_mass,
+          });
+        } else {
+          let height = 1.0; // default
+          if (part instanceof FuelTank) {
+            (part as FuelTank).createMesh();
+            height = part.bounds.max.y - part.bounds.min.y;
+          }
+
+          return_data.push({
+            index,
+            part,
+            gltf: undefined,
+            height,
+          });
         }
-
-        return_data.push({
-          index,
-          part,
-          gltf: undefined,
-          height,
-        });
       }
 
       index++;
@@ -198,16 +203,24 @@ export default class RocketSimulator {
   initSpaceShip() {
     this.loadShipParts().then((array) => {
       let part_height = 0;
-      for (let item of array) {
-        // console.log(item);
-        this.currentMission.ships[0].add(item.part);
-        item.part.position.y = part_height;
-        part_height += item.height;
-        item.part.castShadow = true;
-        if (item.gltf !== undefined) {
+      for (let data of array) {
+        // console.log(data);
+        this.currentMission.ships[0].add(data.part);
+        data.part.position.y = part_height;
+
+        part_height += data.height;
+        data.part.castShadow = true;
+        if (data.gltf !== undefined) {
+          console.log(parseFloat(data.center_of_mass[1]));
+
+          data.part.centerOfMass.position.set(
+            parseFloat(data.center_of_mass[0]),
+            parseFloat(data.center_of_mass[1]),
+            parseFloat(data.center_of_mass[2])
+          );
           const gltf_loader = new GLTFLoader();
           gltf_loader.load(
-            item.gltf, // url
+            data.gltf, // url
             //loaded
             (gltf) => {
               gltf.scene.castShadow = true;
@@ -216,9 +229,12 @@ export default class RocketSimulator {
                 if (child instanceof Mesh) {
                   child.castShadow = true;
                   child.receiveShadow = true;
+
+                  child.material.side = THREE.FrontSide;
+                  child.material.shadowSide = THREE.BackSide;
                 }
               }
-              item.part.add(gltf.scene);
+              data.part.add(gltf.scene);
             },
             // progress
             () => {},
@@ -229,20 +245,43 @@ export default class RocketSimulator {
           );
         } else {
           // console.log("Creating Custom Mesh");
-          if (item.part instanceof FuelTank) {
-            let mesh = item.part.createMesh();
-            // part_height += item.height;
-            item.part.add(mesh);
+          if (data.part instanceof FuelTank) {
+            let mesh = data.part.createMesh();
+
+            data.part.add(mesh);
           }
         }
-      }
-    });
 
-    // console.log(heights);
+        const geometry = new THREE.SphereBufferGeometry(0.1, 20, 20);
+        const material = new THREE.MeshBasicMaterial({ color: "green" });
+        material.depthTest = false;
+        data.part.centerOfMass.renderOrder = 1;
+
+        data.part.centerOfMass.geometry = geometry;
+        data.part.centerOfMass.material = material;
+
+        // this.scene.add(data.part.centerOfMass);
+      }
+
+      /**
+       * SHIP center of mass display
+       */
+
+      const geometry2 = new THREE.SphereBufferGeometry(0.2, 20, 20);
+      const material2 = new THREE.MeshBasicMaterial({ color: "red" });
+      material2.depthTest = false;
+      this.currentSpaceShip.centerOfMass.renderOrder = 1;
+
+      this.currentSpaceShip.centerOfMass.geometry = geometry2;
+      this.currentSpaceShip.centerOfMass.material = material2;
+
+      this.scene.add(this.currentSpaceShip.centerOfMass);
+      console.log(this.scene);
+    });
   }
   initPlanet() {
     let planet = this.currentMission.launchPlanet;
-    let geometry = new THREE.SphereBufferGeometry(planet.radius * 1000, 60, 30);
+    let geometry = new THREE.SphereGeometry(planet.radius * 1000, 100, 100);
 
     if (planet.transformMode === "ship") {
       geometry.translate(0, -planet.radius * 1000, 0);
@@ -254,8 +293,11 @@ export default class RocketSimulator {
     let material = new THREE.MeshPhysicalMaterial({});
 
     material.map = planet.texture;
+    material.side = THREE.FrontSide;
+    material.depthTest = false;
     let planet_mesh = new THREE.Mesh(geometry, material);
 
+    planet_mesh.renderOrder = -1;
     this.currentPlanet.add(planet_mesh);
     // this.currentPlanet.position.y = -planet.radius * 1000;
     // this.launchPad.rotateX(Math.PI * 0.5);
@@ -268,6 +310,7 @@ export default class RocketSimulator {
     );
     ground.rotateX(-Math.PI / 2.0);
     ground.receiveShadow = true;
+    ground.renderOrder = 1;
     this.launchPad.add(ground);
     const axesHelper = new THREE.AxesHelper(5);
     this.launchPad.add(axesHelper);
@@ -288,27 +331,36 @@ export default class RocketSimulator {
     //// engines
 
     ship.engines.forEach((engine, engine_index) => {
-      let quantity = engine.flowRate * engine.throttle * deltaTime;
-      engine.fuelTanks.forEach((tank, tank_index) => {
-        if (tank.fuelAmount > 0.0) {
-          tank.fuelAmount -= quantity / (tank.getVolume() * 1000);
-          // console.log(tank.fuelAmount);
-        } else {
-          tank.fuelAmount = 0;
-          tank.empty = true;
-        }
-      });
-      engine.flamedOut = engine.fuelTanks.every((tank) => tank.empty);
+      if (engine.activated) {
+        let quantity = engine.flowRate * engine.throttle * deltaTime;
+        quantity /= engine.fuelTanks.length;
+        engine.fuelTanks.forEach((tank, tank_index) => {
+          if (tank.fuelAmount > 0.0) {
+            tank.fuelAmount -= quantity / (tank.getVolume() * 1000);
+            // console.log(tank.fuelAmount);
+          } else {
+            tank.fuelAmount = 0;
+            tank.empty = true;
+          }
+        });
+        engine.flamedOut = engine.fuelTanks.every((tank) => tank.empty);
+      }
     });
 
+    this.currentSpaceShip.computeCenterOfMass();
+
     for (let engine of ship.engines) {
-      if (!engine.flamedOut) {
+      if (!engine.flamedOut && engine.activated) {
         //// compute thrust ...
         let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
 
         let force = Utils.KNToKg(engine.thrust) - shipWeight;
         // console.log("force", force);
-        ship.velocity.add(engine.thrustDirection.clone().multiplyScalar(-1 * engine.throttle * (force / shipWeight)));
+        ship.velocity.add(
+          engine.thrustDirection
+            .clone()
+            .multiplyScalar(-1 * engine.throttle * (force / shipWeight) * this.clock.time_scale)
+        );
       }
     }
     ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));

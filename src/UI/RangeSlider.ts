@@ -17,12 +17,14 @@ export default class RangeSlider {
     parentNode.appendChild(this.container);
     this.input = document.createElement("input");
     this.input.type = "range";
-    this.input.id = "range";
+    this.input.id = `range-${name}`;
+    this.input.style.width = "90%";
+    this.input.style.maxWidth = "90%";
     this.input.value = "0";
     this.input.dataset.bind = "name";
 
     this.label = document.createElement("label");
-    this.label.innerHTML = `${this.name}: `;
+    this.label.innerHTML = `${this.name}:<br> `;
     this.label.classList.add("range-label");
     this.label.setAttribute("for", this.input.id);
 
@@ -32,7 +34,7 @@ export default class RangeSlider {
 
     this.value_span = document.createElement("span");
     // this.value_span.innerHTML = this.input.value;
-    this.value_span.classList.add("range-label");
+    this.value_span.classList.add("range-value");
     this.container.appendChild(this.value_span);
     this.input.addEventListener("input", (e) => {
       let val = (<HTMLInputElement>e.target).value;
@@ -48,11 +50,11 @@ export default class RangeSlider {
     const trigger = new Event("input");
     this.input.dispatchEvent(trigger);
   }
-  get value() {
+  getValue() {
     return this.input.value;
   }
 
-  set value(val) {
+  setValue(val) {
     this.input.value = val;
     this.input.dispatchEvent(new Event("input"));
   }
