@@ -219,9 +219,11 @@ window.addEventListener("keypress", (event) => {
       break;
     case "a":
       ship.rotation.x -= 1.0 * rocket_sim.clock.getDeltaTime();
+
       break;
     case "e":
       ship.rotation.x += 1.0 * rocket_sim.clock.getDeltaTime();
+
       break;
     case " ": // space bar
       // ship.engines[0].throttle = 0;

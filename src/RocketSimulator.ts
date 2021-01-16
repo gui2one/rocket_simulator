@@ -44,7 +44,7 @@ export default class RocketSimulator {
 
   activeCameraId: number = -1;
   activeCamera: THREE.PerspectiveCamera;
-
+  shipCamera: THREE.PerspectiveCamera;
   glftLoader: GLTFLoader;
 
   currentMission: Mission;
@@ -88,12 +88,16 @@ export default class RocketSimulator {
     this.activeCameraId = 0;
     this.activeCamera = this.cameras[this.activeCameraId];
 
-    let ship_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
-    ship_camera.position.x = 10.0;
-    ship_camera.position.y = 5.0;
-    ship_camera.position.z = 10.0;
-    this.cameras.push(ship_camera);
-    this.currentMission.ships[0].add(ship_camera);
+    this.shipCamera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
+    this.shipCamera.position.x = 20.0;
+    this.shipCamera.position.y = 5.0;
+    this.shipCamera.position.z = 0.0;
+
+    // this.shipCamera.rotation.x = -this.shipCamera.rotation.x;
+    // this.shipCamera.rotation.y = -this.shipCamera.rotation.y;
+    // this.shipCamera.rotation.z = -this.shipCamera.rotation.z;
+    this.cameras.push(this.shipCamera);
+    this.currentSpaceShip.centerOfMass.add(this.shipCamera);
 
     this.orbitControls = new OrbitControls(this.cameras[this.activeCameraId], this.canvas);
     this.orbitControls.enablePan = false;
