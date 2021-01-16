@@ -65,8 +65,8 @@ const rocket_controls = () => {
 
   fuel_amount_slider = new RangeSlider(div, "Fuel Amount", (value) => {
     // console.log(ship.fuelTanks[0].fuelAmount);
-    // start_fuel_amount = parseFloat(value) / 100.0;
-    ship.fuelTanks[0].fuelAmount = parseFloat(value) / 100.0;
+    start_fuel_amount = parseFloat(value) / 100.0;
+    ship.fuelTanks[0].fuelAmount = start_fuel_amount;
   });
 
   fuel_amount_slider.setValue(100);
@@ -127,7 +127,8 @@ const init_flight_infos = () => {
 
 const update_flight_infos = () => {
   let div = document.getElementById("flight-infos");
-  altitude = ship.position.y;
+  altitude =
+    ship.position.clone().distanceTo(rocket_sim.currentPlanet.centerOfMass) - rocket_sim.currentPlanet.radius * 1000.0;
   let altitude_postfix = "m";
   if (altitude > 1000) {
     altitude_postfix = "Km";
@@ -215,6 +216,12 @@ window.addEventListener("keypress", (event) => {
     case "x":
       // ship.engines[0].throttle = 0;
       thrust_slider.setValue(0.0);
+      break;
+    case "a":
+      ship.rotation.x -= 1.0 * rocket_sim.clock.getDeltaTime();
+      break;
+    case "e":
+      ship.rotation.x += 1.0 * rocket_sim.clock.getDeltaTime();
       break;
     case " ": // space bar
       // ship.engines[0].throttle = 0;

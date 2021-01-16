@@ -1,4 +1,4 @@
-import { Mesh, Vector3 } from "three";
+import { Group, Mesh, Vector3 } from "three";
 import OrbitalBody from "../OrbitalBody/OrbitalBody";
 import { Engine } from "./Engine";
 import { FuelTank } from "./FuelTank";
@@ -12,15 +12,19 @@ export default class SpaceShip extends OrbitalBody {
 
   centerOfMass: Mesh;
   jsonURL: string; //mainly for compatibility with SpaceshipPart Class
+
+  partsGroup: Group;
   constructor() {
     super();
     this.parts = [];
+    this.partsGroup = new Group();
+    this.add(this.partsGroup);
     // this.parts.push(new Engine());
     this.position.set(0, 1, 0);
     this.velocity = new Vector3(0, 0, 0);
     this.angularVelocity = new Vector3(0, 0, 0);
     this.centerOfMass = new Mesh();
-    // this.add(this.centerOfMass);
+    // this.centerOfMass.add(this);
   }
 
   computeShipMass(): number {

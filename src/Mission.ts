@@ -20,8 +20,8 @@ export default class Mission {
   get gravityAcceleration(): number {
     let ship = this.ships[0];
     let planet = this.launchPlanet;
-    let altitude = ship.position.clone().distanceTo(planet.centerOfMass);
-    let ratio = altitude / (planet.radius * 1000.0);
+    let realAltitude = ship.position.clone().distanceTo(planet.centerOfMass);
+    let ratio = realAltitude / (planet.radius * 1000.0);
 
     return (planet.gravityAcceleration * 1.0) / (ratio * ratio);
   }

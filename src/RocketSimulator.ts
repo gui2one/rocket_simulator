@@ -202,10 +202,11 @@ export default class RocketSimulator {
   }
   initSpaceShip() {
     this.loadShipParts().then((array) => {
+      this.currentSpaceShip.computeCenterOfMass();
       let part_height = 0;
       for (let data of array) {
         // console.log(data);
-        this.currentMission.ships[0].add(data.part);
+        this.currentSpaceShip.partsGroup.add(data.part);
         data.part.position.y = part_height;
 
         part_height += data.height;
@@ -275,7 +276,7 @@ export default class RocketSimulator {
       this.currentSpaceShip.centerOfMass.geometry = geometry2;
       this.currentSpaceShip.centerOfMass.material = material2;
 
-      this.scene.add(this.currentSpaceShip.centerOfMass);
+      this.currentSpaceShip.add(this.currentSpaceShip.centerOfMass);
       console.log(this.scene);
     });
   }
@@ -318,8 +319,13 @@ export default class RocketSimulator {
 
   updateSimulation() {
     const ship = this.currentMission.ships[0];
+
+    //// move in regard to center of mass ?
+    let new_pos = ship.centerOfMass.position.clone().multiplyScalar(-1.0);
+    ship.partsGroup.position.set(new_pos.x, new_pos.y, new_pos.z);
     //// time management
     this.clock.update();
+
     let deltaTime = this.clock.getDeltaTime();
 
     //// gravity
@@ -355,16 +361,18 @@ export default class RocketSimulator {
         let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
 
         let force = Utils.KNToKg(engine.thrust) - shipWeight;
-        // console.log("force", force);
+
+        let d = engine.thrustDirection.clone().applyEuler(this.currentSpaceShip.rotation.clone());
+        // console.log(d);
         ship.velocity.add(
-          engine.thrustDirection
-            .clone()
-            .multiplyScalar(-1 * engine.throttle * (force / shipWeight) * this.clock.time_scale)
+          d.clone().multiplyScalar(-1 * engine.throttle * (force / shipWeight) * this.clock.time_scale)
         );
       }
     }
     ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
-    if (ship.position.y < 0) {
+    let altitude =
+      ship.position.clone().distanceTo(this.currentPlanet.centerOfMass) - this.currentPlanet.radius * 1000.0;
+    if (altitude < 0) {
       ship.position.y = 0;
       ship.velocity.set(0, 0, 0);
     }
