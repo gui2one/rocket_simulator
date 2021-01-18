@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Box3, Vector3 } from "three";
+import { Box3, Vector, Vector3 } from "three";
 
 export class Bounds {
   min: Vector3;
@@ -54,14 +54,14 @@ export class SpaceShipPart extends THREE.Object3D {
   jsonURL: string;
   bounds: any;
 
-  centerOfMass: THREE.Mesh;
+  centerOfMass: Vector3;
 
   constructor() {
     super();
     this.bounds = new Bounds();
-    this.centerOfMass = new THREE.Mesh();
-    this.centerOfMass.name = "center of mass";
+    this.centerOfMass = new THREE.Vector3();
+    // this.centerOfMass.name = "center of mass";
 
-    this.add(this.centerOfMass);
+    // this.add(this.centerOfMass);
   }
 }

@@ -1,29 +1,30 @@
-import { Group, Mesh, Vector3 } from "three";
 import OrbitalBody from "../OrbitalBody/OrbitalBody";
 import { Engine } from "./Engine";
 import { FuelTank } from "./FuelTank";
 import { SpaceShipPart } from "./SpaceShipPart";
+import * as THREE from "three";
 
 export default class SpaceShip extends OrbitalBody {
   parts: Array<SpaceShipPart | SpaceShip>;
 
-  velocity: Vector3;
-  angularVelocity: Vector3;
+  velocity: THREE.Vector3;
+  angularVelocity: THREE.Vector3;
 
-  centerOfMass: Mesh;
+  centerOfMass: THREE.Vector3;
+
   jsonURL: string; //mainly for compatibility with SpaceshipPart Class
 
-  partsGroup: Group;
+  partsGroup: THREE.Group;
   constructor() {
     super();
     this.parts = [];
-    this.partsGroup = new Group();
+    this.partsGroup = new THREE.Group();
     this.add(this.partsGroup);
     // this.parts.push(new Engine());
     this.position.set(0, 1, 0);
-    this.velocity = new Vector3(0, 0, 0);
-    this.angularVelocity = new Vector3(0, 0, 0);
-    this.centerOfMass = new Mesh();
+    this.velocity = new THREE.Vector3(0, 0, 0);
+    this.angularVelocity = new THREE.Vector3(0, 0, 0);
+    this.centerOfMass = new THREE.Vector3();
     // this.centerOfMass.add(this);
   }
 
@@ -43,9 +44,9 @@ export default class SpaceShip extends OrbitalBody {
   computeCenterOfMass() {
     let fullMass = this.computeShipMass();
 
-    let pos = new Vector3(0, 0, 0);
+    let pos: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
     this.parts.forEach((part, index) => {
-      if (index === 0) pos = part.centerOfMass.position.clone();
+      if (index === 0) pos = part.centerOfMass.clone();
       else {
         let part_mass;
         if (part instanceof FuelTank) {
@@ -55,11 +56,11 @@ export default class SpaceShip extends OrbitalBody {
           part_mass = part.mass;
         }
         let ratio = part_mass / fullMass;
-        pos.add(part.centerOfMass.position.clone().multiplyScalar(ratio));
+        pos.add(part.centerOfMass.clone().multiplyScalar(ratio));
       }
     });
 
-    this.centerOfMass.position.set(pos.x, pos.y, pos.z);
+    this.centerOfMass.set(pos.x, pos.y, pos.z);
   }
 
   get engines(): Array<Engine> {

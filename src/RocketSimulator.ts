@@ -97,7 +97,7 @@ export default class RocketSimulator {
     // this.shipCamera.rotation.y = -this.shipCamera.rotation.y;
     // this.shipCamera.rotation.z = -this.shipCamera.rotation.z;
     this.cameras.push(this.shipCamera);
-    this.currentSpaceShip.centerOfMass.add(this.shipCamera);
+    this.currentSpaceShip.add(this.shipCamera);
 
     this.orbitControls = new OrbitControls(this.cameras[this.activeCameraId], this.canvas);
     this.orbitControls.enablePan = false;
@@ -218,7 +218,7 @@ export default class RocketSimulator {
         if (data.gltf !== undefined) {
           console.log(parseFloat(data.center_of_mass[1]));
 
-          data.part.centerOfMass.position.set(
+          data.part.centerOfMass.set(
             parseFloat(data.center_of_mass[0]),
             parseFloat(data.center_of_mass[1]),
             parseFloat(data.center_of_mass[2])
@@ -260,12 +260,14 @@ export default class RocketSimulator {
         const geometry = new THREE.SphereBufferGeometry(0.1, 20, 20);
         const material = new THREE.MeshBasicMaterial({ color: "green" });
         material.depthTest = false;
-        data.part.centerOfMass.renderOrder = 1;
+        const COM_object = new THREE.Mesh();
 
-        data.part.centerOfMass.geometry = geometry;
-        data.part.centerOfMass.material = material;
+        COM_object.renderOrder = 1;
 
-        // this.scene.add(data.part.centerOfMass);
+        COM_object.geometry = geometry;
+        COM_object.material = material;
+
+        this.scene.add(COM_object);
       }
 
       /**
@@ -275,12 +277,12 @@ export default class RocketSimulator {
       const geometry2 = new THREE.SphereBufferGeometry(0.2, 20, 20);
       const material2 = new THREE.MeshBasicMaterial({ color: "red" });
       material2.depthTest = false;
-      this.currentSpaceShip.centerOfMass.renderOrder = 1;
+      const spaceship_COM_object = new THREE.Mesh();
+      spaceship_COM_object.geometry = geometry2;
+      spaceship_COM_object.material = material2;
+      spaceship_COM_object.renderOrder = 1;
 
-      this.currentSpaceShip.centerOfMass.geometry = geometry2;
-      this.currentSpaceShip.centerOfMass.material = material2;
-
-      this.currentSpaceShip.add(this.currentSpaceShip.centerOfMass);
+      this.currentSpaceShip.add(spaceship_COM_object);
       console.log(this.scene);
     });
   }
@@ -325,7 +327,7 @@ export default class RocketSimulator {
     const ship = this.currentMission.ships[0];
 
     //// move in regard to center of mass ?
-    let new_pos = ship.centerOfMass.position.clone().multiplyScalar(-1.0);
+    let new_pos = ship.centerOfMass.clone().multiplyScalar(-1.0);
     ship.partsGroup.position.set(new_pos.x, new_pos.y, new_pos.z);
     //// time management
     this.clock.update();

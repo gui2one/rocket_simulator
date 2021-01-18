@@ -54,7 +54,7 @@ export class FuelTank extends SpaceShipPart {
 
     let fuelMassRatio = this.getFuelMass() / fullMass;
 
-    this.centerOfMass.position.y = lerp(fuelMassRatio, tankCenterOfMassY, fuelCenterOfMassY);
+    this.centerOfMass.y = lerp(fuelMassRatio, tankCenterOfMassY, fuelCenterOfMassY);
   }
   getFuelMass(): number {
     this.computeVolume();

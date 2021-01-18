@@ -1,3 +1,5 @@
+import { Vector3 } from "three";
+
 /**
  *
  * Rocket stuff
@@ -8,6 +10,14 @@ export const KNToKg = (newtons: number): number => {
 
 export const KgToKN = (kilograms: number): number => {
   return kilograms * 0.00980665;
+};
+
+export const fromPolar = (u: number, v: number, radius: number): Vector3 => {
+  let x = radius * Math.sin(v) * Math.cos(u);
+  let y = radius * Math.sin(v) * Math.sin(u);
+  let z = radius * Math.cos(v);
+
+  return new Vector3(x, y, z);
 };
 
 /**
