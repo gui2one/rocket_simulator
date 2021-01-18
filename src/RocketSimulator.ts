@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
-
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import CustomCameraControls from "./CustomCameraControls";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
@@ -40,7 +39,8 @@ export default class RocketSimulator {
   sunlight: THREE.DirectionalLight;
   container: HTMLElement;
   canvas: HTMLCanvasElement;
-  orbitControls: OrbitControls;
+  // orbitControls: OrbitControls;
+  cameraControls: CustomCameraControls;
 
   activeCameraId: number = -1;
   activeCamera: THREE.PerspectiveCamera;
@@ -79,9 +79,12 @@ export default class RocketSimulator {
     this.container.appendChild(this.renderer.domElement);
 
     let pad_camera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
-    pad_camera.position.x = 0.0;
-    pad_camera.position.y = 5.0;
-    pad_camera.position.z = -5.0;
+    pad_camera.position.x = -10.0;
+    pad_camera.position.y = 4.0;
+    pad_camera.position.z = -0.0;
+
+    pad_camera.rotation.y = Math.PI;
+
     this.cameras.push(pad_camera);
     this.launchPad.add(pad_camera);
 
@@ -89,18 +92,22 @@ export default class RocketSimulator {
     this.activeCamera = this.cameras[this.activeCameraId];
 
     this.shipCamera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
-    this.shipCamera.position.x = 20.0;
+    this.shipCamera.position.x = -10.0;
     this.shipCamera.position.y = 5.0;
     this.shipCamera.position.z = 0.0;
-
-    // this.shipCamera.rotation.x = -this.shipCamera.rotation.x;
-    // this.shipCamera.rotation.y = -this.shipCamera.rotation.y;
-    // this.shipCamera.rotation.z = -this.shipCamera.rotation.z;
+    // this.shipCamera.rotation.y = Math.PI;
     this.cameras.push(this.shipCamera);
-    this.currentSpaceShip.add(this.shipCamera);
+    this.activeCamera = this.shipCamera;
+    this.scene.add(this.shipCamera);
 
-    this.orbitControls = new OrbitControls(this.cameras[this.activeCameraId], this.canvas);
-    this.orbitControls.enablePan = false;
+    // this.orbitControls = new OrbitControls(this.cameras[this.activeCameraId], this.canvas);
+    // this.orbitControls.enablePan = false;
+
+    this.cameraControls = new CustomCameraControls(
+      this.shipCamera,
+      this.renderer.domElement,
+      this.currentSpaceShip.position
+    );
 
     this.sunlight = new THREE.DirectionalLight();
     this.sunlight.castShadow = true;
@@ -156,10 +163,10 @@ export default class RocketSimulator {
     else this.activeCameraId = 0;
 
     this.activeCamera = this.cameras[this.activeCameraId];
-    // this.activeCamera.updateProjectionMatrix();
-    this.orbitControls.object = this.activeCamera;
-    this.orbitControls.center = this.currentSpaceShip.position;
-    this.orbitControls.update();
+
+    // this.orbitControls.object = this.activeCamera;
+    // this.orbitControls.center = this.currentSpaceShip.position;
+    // this.orbitControls.update();
     this.renderPass.camera = this.activeCamera;
   }
 
@@ -261,13 +268,13 @@ export default class RocketSimulator {
         const material = new THREE.MeshBasicMaterial({ color: "green" });
         material.depthTest = false;
         const COM_object = new THREE.Mesh();
-
+        COM_object.position.set(data.part.centerOfMass.x, data.part.centerOfMass.y, data.part.centerOfMass.z);
         COM_object.renderOrder = 1;
 
         COM_object.geometry = geometry;
         COM_object.material = material;
 
-        this.scene.add(COM_object);
+        data.part.add(COM_object);
       }
 
       /**
@@ -389,6 +396,8 @@ export default class RocketSimulator {
     this.scene.position.y = -this.currentSpaceShip.position.y;
     this.scene.position.z = -this.currentSpaceShip.position.z;
     // this.renderer.render(this.scene, this.activeCamera);
+
+    this.cameraControls.update(this.clock.getScaledDeltaTime());
     this.effectComposer.render();
   }
 

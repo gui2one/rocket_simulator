@@ -50,4 +50,8 @@ export default class Clock {
   getDeltaTime(): number {
     return this.delta_millis / 1000.0;
   }
+
+  getScaledDeltaTime(): number {
+    return this.getDeltaTime() * (1.0 / this.time_scale);
+  }
 }
