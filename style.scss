@@ -19,6 +19,8 @@ body {
     margin-top: 0;
     margin-bottom: 0;
   }
+
+  user-select: none;
 }
 
 #flight-infos {
@@ -27,6 +29,7 @@ body {
   right: 0;
   padding: 1em;
   background-color: rgba(#333, 0.5);
+  pointer-events: none;
 }
 
 #render-infos {
@@ -35,6 +38,7 @@ body {
   right: 0;
   padding: 1em;
   background-color: rgba(#333, 0.5);
+  pointer-events: none;
 }
 
 .graph {

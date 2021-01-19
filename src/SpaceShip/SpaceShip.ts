@@ -21,7 +21,7 @@ export default class SpaceShip extends OrbitalBody {
     this.partsGroup = new THREE.Group();
     this.add(this.partsGroup);
     // this.parts.push(new Engine());
-    this.position.set(0, 1, 0);
+    this.position.set(0, 10, 0);
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.angularVelocity = new THREE.Vector3(0, 0, 0);
     this.centerOfMass = new THREE.Vector3();

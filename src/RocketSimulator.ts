@@ -223,7 +223,7 @@ export default class RocketSimulator {
         part_height += data.height;
         data.part.castShadow = true;
         if (data.gltf !== undefined) {
-          console.log(parseFloat(data.center_of_mass[1]));
+          // console.log(parseFloat(data.center_of_mass[1]));
 
           data.part.centerOfMass.set(
             parseFloat(data.center_of_mass[0]),
@@ -384,9 +384,13 @@ export default class RocketSimulator {
     }
     ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
     let altitude =
-      ship.position.clone().distanceTo(this.currentPlanet.centerOfMass) - this.currentPlanet.radius * 1000.0;
+      ship.position
+        .clone()
+        .sub(this.currentSpaceShip.centerOfMass.clone())
+        .distanceTo(this.currentPlanet.centerOfMass) -
+      this.currentPlanet.radius * 1000.0;
     if (altitude < 0) {
-      ship.position.y = 0;
+      ship.position.y = this.currentSpaceShip.centerOfMass.y;
       ship.velocity.set(0, 0, 0);
     }
   }
