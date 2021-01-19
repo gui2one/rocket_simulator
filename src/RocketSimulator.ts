@@ -401,7 +401,7 @@ export default class RocketSimulator {
     this.scene.position.z = -this.currentSpaceShip.position.z;
     // this.renderer.render(this.scene, this.activeCamera);
 
-    this.cameraControls.update(this.clock.getScaledDeltaTime());
+    this.cameraControls.update(this.clock.getDeltaTime() / this.clock.time_scale);
     this.effectComposer.render();
   }
 
