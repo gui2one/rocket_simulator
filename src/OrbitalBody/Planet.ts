@@ -46,23 +46,23 @@ export default class Planet extends OrbitalBody {
     Earth(): Planet {
       let planet = new Planet();
       planet.radius = 6371; // kilometers
-      planet.mass = 5972000000000000000000000; // 5,972 × 10^24 kg
+      planet.mass = 5.972e24; // 5,972 × 10^24 kg
       planet.name = "Earth";
-      planet.gravityAcceleration = 9.8;
+
       planet.setTransformMode("ship");
-      planet.setTexure("assets/textures/earth.jpg");
+      planet.setTexure("assets/textures/8k_earth_daymap.jpg");
       // console.log(planet.mass);
       return planet;
     },
-    ExtraSmall(): Planet {
+    Moon(): Planet {
       let planet = new Planet();
-      planet.radius = 1; // kilometers
-      planet.mass = 5972000000000000000000000; // 5,972 × 10^24 kg
-      planet.name = "Extra Small Preset";
-      planet.gravityAcceleration = 1.0;
+      planet.radius = 1737.4; // kilometers
+      planet.mass = 7.342e22; // 5,972 × 10^24 kg
+      planet.name = "Moon";
+
       planet.setTransformMode("ship");
-      // planet.setTexure("assets/textures/earth.jpg");
-      // console.log(planet.mass);
+      planet.setTexure("assets/textures/8k_moon.jpg");
+
       return planet;
     },
   };

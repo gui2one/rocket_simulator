@@ -15,13 +15,17 @@ export default class SpaceShip extends OrbitalBody {
   jsonURL: string; //mainly for compatibility with SpaceshipPart Class
 
   partsGroup: THREE.Group;
+
+  hasCrashed: boolean = false;
+  hasLiftOff: boolean = false;
+  isOnPad: boolean = true;
   constructor() {
     super();
     this.parts = [];
     this.partsGroup = new THREE.Group();
     this.add(this.partsGroup);
     // this.parts.push(new Engine());
-    this.position.set(0, 10, 0);
+    this.position.set(0, 0, 0);
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.angularVelocity = new THREE.Vector3(0, 0, 0);
     this.centerOfMass = new THREE.Vector3();

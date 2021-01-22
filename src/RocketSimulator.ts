@@ -308,6 +308,7 @@ export default class RocketSimulator {
 
     material.map = planet.texture;
     material.side = THREE.FrontSide;
+    // material.map.minFilter = THREE.LinearMipmapLinearFilter;
     material.depthTest = false;
     let planet_mesh = new THREE.Mesh(geometry, material);
 
@@ -331,13 +332,14 @@ export default class RocketSimulator {
   }
 
   updateSimulation() {
+    this.clock.update();
     const ship = this.currentMission.ships[0];
 
+    if (ship.hasCrashed) return;
     //// move in regard to center of mass ?
     let new_pos = ship.centerOfMass.clone().multiplyScalar(-1.0);
     ship.partsGroup.position.set(new_pos.x, new_pos.y, new_pos.z);
     //// time management
-    this.clock.update();
 
     let deltaTime = this.clock.getDeltaTime();
 
@@ -345,7 +347,7 @@ export default class RocketSimulator {
     let dir = ship.position.clone().sub(this.currentMission.launchPlanet.centerOfMass).normalize();
     let gravity = dir.multiplyScalar(-this.currentMission.gravityAcceleration * deltaTime);
 
-    ship.velocity.add(gravity);
+    if (ship.hasLiftOff && !ship.hasCrashed) ship.velocity.add(gravity);
 
     //// engines
 
@@ -390,8 +392,18 @@ export default class RocketSimulator {
         .distanceTo(this.currentPlanet.centerOfMass) -
       this.currentPlanet.radius * 1000.0;
     if (altitude < 0) {
-      ship.position.y = this.currentSpaceShip.centerOfMass.y;
+      if (ship.velocity.length() > 100.0) this.currentSpaceShip.hasCrashed = true;
+      // ship.position.y = this.currentSpaceShip.centerOfMass.y;
       ship.velocity.set(0, 0, 0);
+    }
+
+    if (altitude > ship.centerOfMass.y + 1.0 && !ship.hasLiftOff) {
+      ship.hasLiftOff = true;
+      console.log("Lif Off !!!!");
+    }
+
+    if (ship.isOnPad) {
+      ship.position.y = this.currentSpaceShip.centerOfMass.y;
     }
   }
 

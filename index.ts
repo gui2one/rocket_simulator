@@ -37,7 +37,7 @@ setInterval(() => {
   let local_delta = new_time - old_time;
   altitude_graph.appendData(
     //
-    ship.position.y,
+    rocket_sim.currentMission.shipAltitude,
     local_delta,
     rocket_sim.clock.time_scale
   );
@@ -127,8 +127,8 @@ const init_flight_infos = () => {
 
 const update_flight_infos = () => {
   let div = document.getElementById("flight-infos");
-  altitude =
-    ship.position.clone().distanceTo(rocket_sim.currentPlanet.centerOfMass) - rocket_sim.currentPlanet.radius * 1000.0;
+
+  altitude = rocket_sim.currentMission.shipAltitude;
   let altitude_postfix = "m";
   if (altitude > 1000) {
     altitude_postfix = "Km";
@@ -228,6 +228,7 @@ window.addEventListener("keypress", (event) => {
     case " ": // space bar
       // ship.engines[0].throttle = 0;
       ship.engines[0].activate(start_fuel_amount);
+      ship.isOnPad = false;
       break;
     default:
       break;

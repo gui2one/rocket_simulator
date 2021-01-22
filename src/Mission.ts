@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import Planet from "./OrbitalBody/Planet";
 import { Engine } from "./SpaceShip/Engine";
 import { FuelTank } from "./SpaceShip/FuelTank";
@@ -10,6 +11,7 @@ export default class Mission {
   launchLongitude: number;
 
   ships: Array<SpaceShip>;
+
   constructor() {
     this.launchPlanet = new Planet();
     this.launchLatitude = 48.0833;
@@ -26,6 +28,13 @@ export default class Mission {
     return (planet.gravityAcceleration * 1.0) / (ratio * ratio);
   }
 
+  get shipAltitude(): number {
+    let ship = this.ships[0];
+    let planet = this.launchPlanet;
+    let altitude = ship.position.clone().distanceTo(planet.centerOfMass);
+    altitude -= planet.radius * 1000.0;
+    return altitude;
+  }
   static presets = {
     basic(): Mission {
       let mission = new Mission();

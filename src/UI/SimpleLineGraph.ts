@@ -5,7 +5,7 @@ export interface DataPoint {
 }
 
 export class SimpleLineGraph {
-  max_samples: number = 100;
+  max_samples: number = 1000;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   title: string;
@@ -97,7 +97,6 @@ export class SimpleLineGraph {
       let time_offset = 0;
       this.data.forEach((data_point, index) => {
         let x = time_offset * (w / this.max_time);
-        // console.log(time_offset);
 
         const val = data_point.value / this.max_value;
         let y = (1 - val) * h;
