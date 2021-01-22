@@ -183,6 +183,36 @@ const update_render_infos = () => {
   div.innerHTML += `Lines : ${infos.render.lines}<br>`;
   div.innerHTML += `Frame : ${infos.render.frame}<br>`;
 };
+const computeOrbitSpeed = (radius: number): number => {
+  // v = Math.sqrt((G * M)/ radius)
+  const G = 6.67e-11;
+
+  let v = Math.sqrt((rocket_sim.currentPlanet.mass * G) / radius);
+  return v;
+};
+const init_make_orbit = () => {
+  const div = document.createElement("div");
+  document.body.appendChild(div);
+  div.id = "make-orbit";
+
+  const button = document.createElement("button");
+  button.innerHTML = "press me";
+  div.appendChild(button);
+
+  const altitude_input = document.createElement("input");
+  altitude_input.value = "600";
+  div.appendChild(altitude_input);
+
+  button.addEventListener("click", () => {
+    let rad = (rocket_sim.currentPlanet.radius + parseFloat(altitude_input.value)) * 1000;
+    let speed = computeOrbitSpeed(rad);
+    console.log("altidue", parseFloat(altitude_input.value));
+    console.log("desired speed : ", speed);
+    ship.isOnPad = false;
+    ship.position.y = parseFloat(altitude_input.value) * 1000;
+    ship.velocity.x = speed;
+  });
+};
 const animate = () => {
   rocket_sim.updateSimulation();
   rocket_sim.update3d();
@@ -199,10 +229,11 @@ rocket_controls();
 init_time_controls();
 init_flight_infos();
 init_render_infos();
+init_make_orbit();
 animate();
 
 window.addEventListener("keypress", (event) => {
-  console.log(event.key);
+  // console.log(event.key);
 
   switch (event.key) {
     case "c":
