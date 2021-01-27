@@ -38,7 +38,7 @@ export default class Mission {
   static presets = {
     basic(): Mission {
       let mission = new Mission();
-      mission.launchPlanet = Planet.presets.Earth();
+      mission.launchPlanet = Planet.presets.Mars();
       let ship = new SpaceShip();
       mission.ships.push(ship);
       const engine = Engine.presets.Merlin1D();

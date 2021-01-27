@@ -92,6 +92,9 @@ export default class RocketSimulator {
     this.activeCamera = this.cameras[this.activeCameraId];
 
     this.shipCamera = new THREE.PerspectiveCamera(45.0, window.innerWidth / window.innerHeight, 0.01, 10000000000000.0);
+    this.shipCamera.layers.enable(0);
+    this.shipCamera.layers.enable(1);
+    // this.shipCamera.layers.toggle(1);
     this.shipCamera.position.x = -10.0;
     this.shipCamera.position.y = 5.0;
     this.shipCamera.position.z = 0.0;
@@ -111,12 +114,23 @@ export default class RocketSimulator {
 
     this.sunlight = new THREE.DirectionalLight();
     this.sunlight.castShadow = true;
+    this.sunlight.layers.enable(0);
+    this.sunlight.layers.enable(1);
+    this.sunlight.layers.toggle(1);
+
+    this.sunlight.shadow.radius = 2;
+    this.sunlight.shadow.mapSize.x = 2048;
+    this.sunlight.shadow.mapSize.y = 2048;
     // this.sunlight.shadow.bias = -0.0001;
     // this.sunlight.shadow.autoUpdate = true;
     // this.sunlight.shadow.camera = this.activeCamera;
     this.sunlight.position.setX(3);
     this.sunlight.position.setY(10);
     this.sunlight.position.setZ(5);
+
+    // this.sunlight.position.copy(
+    //   new THREE.Vector3(0, this.currentPlanet.radius * 1000 * 3, this.currentPlanet.radius * 1000 * 3)
+    // );
 
     let target = new THREE.Object3D();
     target.position.set(0, 0, 0);
@@ -127,6 +141,8 @@ export default class RocketSimulator {
 
     let ambientLight = new THREE.AmbientLight("lightblue");
     ambientLight.intensity = 0.3;
+    ambientLight.layers.enableAll();
+    ambientLight.layers.disable(1);
     this.launchPad.add(ambientLight);
 
     this.renderPass = new RenderPass(this.scene, this.activeCamera);
@@ -290,6 +306,7 @@ export default class RocketSimulator {
       spaceship_COM_object.renderOrder = 1;
 
       this.currentSpaceShip.add(spaceship_COM_object);
+      this.currentSpaceShip.layers.set(0);
       console.log(this.scene);
     });
   }
@@ -307,12 +324,17 @@ export default class RocketSimulator {
     let material = new THREE.MeshPhysicalMaterial({});
 
     material.map = planet.texture;
-    material.side = THREE.FrontSide;
+    material.normalMap = planet.normalTexture;
+    // material.side = THREE.FrontSide;
     // material.map.minFilter = THREE.LinearMipmapLinearFilter;
     material.depthTest = false;
     let planet_mesh = new THREE.Mesh(geometry, material);
 
     planet_mesh.renderOrder = -1;
+    planet_mesh.receiveShadow = true;
+    planet_mesh.castShadow = true;
+
+    planet_mesh.layers.set(1);
     this.currentPlanet.add(planet_mesh);
     // this.currentPlanet.position.y = -planet.radius * 1000;
     // this.launchPad.rotateX(Math.PI * 0.5);
@@ -326,9 +348,12 @@ export default class RocketSimulator {
     ground.rotateX(-Math.PI / 2.0);
     ground.receiveShadow = true;
     ground.renderOrder = 1;
+
+    ground.layers.set(1);
     this.launchPad.add(ground);
     const axesHelper = new THREE.AxesHelper(5);
     this.launchPad.add(axesHelper);
+    this.launchPad.layers.set(1);
   }
 
   updateSimulation() {
@@ -384,7 +409,9 @@ export default class RocketSimulator {
         );
       }
     }
+
     ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
+
     let altitude =
       ship.position
         .clone()

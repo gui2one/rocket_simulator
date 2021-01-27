@@ -209,8 +209,13 @@ const init_make_orbit = () => {
     console.log("altidue", parseFloat(altitude_input.value));
     console.log("desired speed : ", speed);
     ship.isOnPad = false;
+    ship.position.x = 0;
     ship.position.y = parseFloat(altitude_input.value) * 1000;
-    ship.velocity.x = speed;
+    ship.position.z = 0;
+
+    ship.velocity.x = 0;
+    ship.velocity.y = 0;
+    ship.velocity.z = speed;
   });
 };
 const animate = () => {
