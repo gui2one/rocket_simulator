@@ -23,7 +23,7 @@ export default class Mission {
     let ship = this.ships[0];
     let planet = this.launchPlanet;
     let realAltitude = ship.position.clone().distanceTo(planet.centerOfMass);
-    let ratio = realAltitude / (planet.radius * 1000.0);
+    let ratio = realAltitude / (planet.radius * 1000.0); //Km -> m
 
     return (planet.gravityAcceleration * 1.0) / (ratio * ratio);
   }
@@ -38,7 +38,7 @@ export default class Mission {
   static presets = {
     basic(): Mission {
       let mission = new Mission();
-      mission.launchPlanet = Planet.presets.Mars();
+      mission.launchPlanet = Planet.presets.Earth();
       let ship = new SpaceShip();
       mission.ships.push(ship);
       const engine = Engine.presets.Merlin1D();

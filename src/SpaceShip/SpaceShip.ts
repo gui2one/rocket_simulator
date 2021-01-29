@@ -10,6 +10,7 @@ export default class SpaceShip extends OrbitalBody {
   velocity: THREE.Vector3;
   angularVelocity: THREE.Vector3;
 
+  accel: THREE.Vector3;
   centerOfMass: THREE.Vector3;
 
   jsonURL: string; //mainly for compatibility with SpaceshipPart Class
@@ -28,6 +29,7 @@ export default class SpaceShip extends OrbitalBody {
     this.position.set(0, 0, 0);
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.angularVelocity = new THREE.Vector3(0, 0, 0);
+    this.accel = new THREE.Vector3(0, 0, 0);
     this.centerOfMass = new THREE.Vector3();
     // this.centerOfMass.add(this);
   }

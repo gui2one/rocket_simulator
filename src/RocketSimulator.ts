@@ -356,25 +356,59 @@ export default class RocketSimulator {
     this.launchPad.layers.set(1);
   }
 
+  applyForces(): Vector3 {
+    // let deltaTime = this.clock.getDeltaTime();
+    const ship = this.currentMission.ships[0];
+
+    //// forces
+    let forces = new Vector3(0, 0, 0);
+    //// gravity force
+    let dir = ship.position.clone().sub(this.currentMission.launchPlanet.centerOfMass).normalize();
+    let gravity = dir.multiplyScalar(-this.currentMission.gravityAcceleration);
+
+    forces.add(gravity);
+
+    this.currentSpaceShip.computeCenterOfMass();
+    //// engines thrust
+
+    let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
+    for (let engine of ship.engines) {
+      if (!engine.flamedOut && engine.activated) {
+        let force = Utils.KNToKg(engine.thrust) - shipWeight;
+
+        let dir = engine.thrustDirection.clone().applyEuler(this.currentSpaceShip.rotation.clone());
+
+        forces.add(
+          dir
+            .clone()
+            .multiplyScalar(
+              -1 *
+                engine.throttle *
+                (force / shipWeight) *
+                this.clock.time_scale *
+                this.currentMission.gravityAcceleration
+            )
+        );
+      }
+    }
+
+    // console.log(forces.y);
+
+    return forces;
+  }
   updateSimulation() {
     this.clock.update();
     const ship = this.currentMission.ships[0];
 
     if (ship.hasCrashed) return;
     //// move in regard to center of mass ?
-    let new_pos = ship.centerOfMass.clone().multiplyScalar(-1.0);
-    ship.partsGroup.position.set(new_pos.x, new_pos.y, new_pos.z);
+    let new_pos_COM = ship.centerOfMass.clone().multiplyScalar(-1.0);
+    ship.partsGroup.position.set(new_pos_COM.x, new_pos_COM.y, new_pos_COM.z);
     //// time management
 
     let deltaTime = this.clock.getDeltaTime();
 
-    //// gravity
-    let dir = ship.position.clone().sub(this.currentMission.launchPlanet.centerOfMass).normalize();
-    let gravity = dir.multiplyScalar(-this.currentMission.gravityAcceleration * deltaTime);
-
-    if (ship.hasLiftOff && !ship.hasCrashed) ship.velocity.add(gravity);
-
-    //// engines
+    //// engines fuel
 
     ship.engines.forEach((engine, engine_index) => {
       if (engine.activated) {
@@ -393,25 +427,37 @@ export default class RocketSimulator {
       }
     });
 
-    this.currentSpaceShip.computeCenterOfMass();
+    //// basic integration
+    // ship.velocity.add(this.applyForces().multiplyScalar(deltaTime));
+    // ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
+    ////
 
-    for (let engine of ship.engines) {
-      if (!engine.flamedOut && engine.activated) {
-        //// compute thrust ...
-        let shipWeight = ship.computeShipMass() * this.currentMission.gravityAcceleration;
+    //// verlet integration
+    /*
+      let new_pos = y + v*dt + accel*(dt*dt*0.5 );
+      let new_accel = apply_forces();
+      let new_vel = v + (accel + new_accel)* (dt*0.5)
+      y = new_pos
+      v = new_vel
+      accel = new_accel
+     */
 
-        let force = Utils.KNToKg(engine.thrust) - shipWeight;
+    let new_pos = ship.position.clone().add(ship.velocity.clone().multiplyScalar(deltaTime));
+    new_pos.add(ship.accel.clone().multiplyScalar(deltaTime * deltaTime * 0.5));
 
-        let d = engine.thrustDirection.clone().applyEuler(this.currentSpaceShip.rotation.clone());
-        // console.log(d);
-        ship.velocity.add(
-          d.clone().multiplyScalar(-1 * engine.throttle * (force / shipWeight) * this.clock.time_scale)
-        );
-      }
-    }
+    let new_accel = this.applyForces();
+    let new_vel = ship.velocity.clone().add(
+      new_accel
+        .clone()
+        .add(ship.accel)
+        .multiplyScalar(deltaTime * 0.5)
+    );
 
-    ship.position.add(ship.velocity.clone().multiplyScalar(deltaTime));
+    ship.position.set(new_pos.x, new_pos.y, new_pos.z);
+    ship.velocity.set(new_vel.x, new_vel.y, new_vel.z);
+    ship.accel.set(new_accel.x, new_accel.y, new_accel.z);
 
+    //// END VERLET
     let altitude =
       ship.position
         .clone()

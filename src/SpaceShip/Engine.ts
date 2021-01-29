@@ -36,7 +36,7 @@ export class Engine extends SpaceShipPart {
       /// source : https://fr.wikipedia.org/wiki/Merlin_(moteur-fus%C3%A9e)
       let engine = new Engine();
       engine.mass = 470;
-      engine.thrust = 845;
+      engine.thrust = 845; // 845 original value
       // engine.thrust = 200;
       engine.flowRate = 236.6;
       return engine;

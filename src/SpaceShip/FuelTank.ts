@@ -21,7 +21,7 @@ export class FuelTank extends SpaceShipPart {
   constructor() {
     super();
     this.fuel = Fuel.presets.CH4__LOX();
-    this.mass = 1000; // kg dry mass
+    this.mass = 100; // kg dry mass
     this.computeVolume();
   }
 
